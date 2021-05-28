@@ -1,14 +1,16 @@
+import { Box } from "@material-ui/core";
 import * as React from "react";
-import { GamepadManager } from "../components/GamepadManager";
+import { HIDManager } from "../components/HIDManager";
+// import { GamepadManager } from "../components/GamepadManager";
 
 const handleButtonDown = (gamepadIndex, buttonIndex) => {
-    console.info(gamepadIndex, buttonIndex, "down");
+    console.warn(gamepadIndex, buttonIndex, "down");
 };
 const handleButtonUp = (gamepadIndex, buttonIndex) => {
-    console.info(gamepadIndex, buttonIndex, "up");
+    console.warn(gamepadIndex, buttonIndex, "up");
 };
 const handleAxisChange = (gamepadIndex, axisIndex, value) => {
-    console.info(gamepadIndex, axisIndex, value);
+    console.warn(gamepadIndex, axisIndex, value);
 };
 
 // markup
@@ -16,15 +18,13 @@ const IndexPage = () => {
     return (
         <main>
             <title>gamepad viewer</title>
-            <div>
-                <GamepadManager
-                    onButtonDown={handleButtonDown}
-                    onButtonUp={handleButtonUp}
-                    onAxisChange={handleAxisChange}
-                >
-                    <React.Fragment />
-                </GamepadManager>
-            </div>
+            <Box padding={2}>
+                <HIDManager
+                    // onButtonDown={handleButtonDown}
+                    // onButtonUp={handleButtonUp}
+                    // onAxisChange={handleAxisChange}
+                ></HIDManager>
+            </Box>
         </main>
     );
 };
