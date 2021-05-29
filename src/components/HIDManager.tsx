@@ -19,29 +19,14 @@ export interface HIDManagerProps {
     ) => any;
 }
 
-let connectedDevices = [];
-let selectedDevice = null;
+// react is in a different world than normal js
+// and there is a problem with the handler not getting the accurate value
+// MAYBE because the handler function doesnt have the
+var connectedDevices = [];
+var previousInputs = [];
 
 export const HIDManager = (props: HIDManagerProps) => {
-    const [inputInfo, setInputInfo] = React.useState("");
-
-    const selectDevice = (device) => {
-        if (selectedDevice) selectedDevice.oninputreport = null;
-
-        if (!device) {
-            selectedDevice = null;
-        } else {
-            console.info("connected ", device);
-            selectedDevice = device;
-        }
-
-        if (selectedDevice) {
-            selectedDevice.oninputreport = handleInputReport;
-            if (!selectedDevice.opened) selectedDevice.open();
-        }
-
-        printDeviceInfo(device);
-    };
+    const [inputReports, setInputReports] = React.useState([]);
 
     const connectDevice = () => {
         (window.navigator as any).hid
@@ -55,32 +40,66 @@ export const HIDManager = (props: HIDManagerProps) => {
 
     const addDevice = (device) => {
         if (connectedDevices.includes(device)) {
-            console.log("device already in connectedDevices");
+            console.info("device already in connectedDevices");
             return;
         }
+        // use a simple array expansion
+        device.oninputreport = handleInputReport;
+        if (!device.opened) device.open();
         connectedDevices.push(device);
-        console.log("device connected: " + device.productName);
-        if (selectedDevice === null) selectDevice(device);
+        console.info("device added:", device);
+        printDeviceInfo(device);
     };
 
     const removeDevice = (device) => {
-        if (device === selectedDevice) selectedDevice = null;
-        for (let i = connectedDevices.length - 1; i >= 0; --i) {
-            if (connectedDevices[i] === device) {
-                connectedDevices.splice(i, 1);
-                console.log("device disconnected: " + device.productName);
-            }
+        device.oninputreport = null;
+        const index = connectedDevices.indexOf(device);
+        if (index >= 0) {
+            connectedDevices.splice(index, 1);
         }
     };
 
     const handleInputReport = (event) => {
-        let buffer = hex8(event.reportId);
-        const reportData = new Uint8Array(event.data.buffer);
-        for (let byte of reportData) buffer += " " + hex8(byte);
-        setInputInfo(buffer);
+        const index = connectedDevices.indexOf(event.device);
+
+        if (index >= 0) {
+            let buffer = hex8(event.reportId);
+            const reportData = new Uint8Array(event.data.buffer);
+            for (let byte of reportData) buffer += " " + hex8(byte);
+
+            if (previousInputs[index] == buffer) return;
+
+            console.warn(buffer);
+
+            previousInputs[index] =buffer
+            let newInputReports = _.cloneDeep(previousInputs);
+            newInputReports[index] = buffer;
+            setInputReports(newInputReports);
+        }
     };
 
+    // this effect to update the handler for all the devices that live outside of react
     React.useEffect(() => {
+        const nav = window.navigator as any;
+        nav.hid.onconnect = (e) => {
+            addDevice(e.device);
+        };
+        nav.hid.ondisconnect = (e) => {
+            removeDevice(e.device);
+        };
+
+        return () => {};
+    }, []);
+
+    React.useEffect(() => {
+        const nav = window.navigator as any;
+        nav.hid.onconnect = (e) => {
+            addDevice(e.device);
+        };
+        nav.hid.ondisconnect = (e) => {
+            removeDevice(e.device);
+        };
+
         return () => {};
     }, []);
 
@@ -97,14 +116,18 @@ export const HIDManager = (props: HIDManagerProps) => {
                         Connect Device
                     </Button>
                 </Grid>
-                <Grid container item xs={12} spacing={3}>
-                    <FormControl fullWidth>
-                        <TextField
-                            multiline={true}
-                            value={inputInfo}
-                        ></TextField>
-                    </FormControl>
-                </Grid>
+                {inputReports.map((inputReport, i) => {
+                    return (
+                        <Grid container item xs={12} spacing={3} key={i}>
+                            <FormControl fullWidth>
+                                <TextField
+                                    multiline={true}
+                                    value={inputReport}
+                                ></TextField>
+                            </FormControl>
+                        </Grid>
+                    );
+                })}
             </Grid>
         </>
     );

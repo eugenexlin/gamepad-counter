@@ -19,7 +19,7 @@ const haveEvents = "GamepadEvent" in window;
 const haveWebkitEvents = "WebKitGamepadEvent" in window;
 const rAF = window.requestAnimationFrame;
 
-const getButtonStateSafely = (
+const getButtonStateSafely = ( 
     gamepad: Gamepad,
     buttonNum: number,
 ): GamepadButton => {
@@ -50,7 +50,6 @@ export const GamepadManager = (props: GamepadManagerProps) => {
     };
     const addgamepad = (gamepad) => {
         controllers[gamepad.index] = gamepad;
-        console.warn(gamepad)
         rAF(updateStatus);
     };
     const disconnecthandler = (e) => {
