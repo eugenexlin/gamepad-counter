@@ -18,16 +18,15 @@ import { ButtonList } from "./ButtonList";
 // this class just lets you handle hid inputs in a react way
 
 export interface HIDManagerProps {
-    onButtonDown?: (gamepadIndex: number, buttonIndex: number) => any;
-    onButtonUp?: (gamepadIndex: number, buttonIndex: number) => any;
-    onAxisChange?: (
-        gamepadIndex: number,
-        axisIndex: number,
-        axisValue: number,
+    onInputReport: (
+        connectedHIDIndex: number,
+        inputReport: EasyInputFormat,
     ) => any;
 }
 
 export interface EasyInputFormat {
+    deviceName: string;
+    rawData: string;
     axis: number[];
     button: boolean[];
 }
@@ -45,7 +44,7 @@ const getBitFromIndex = (num, index) => {
     return bitMask >> index;
 };
 
-const parseInputReport = (event): EasyInputFormat => {
+const parseInputReport = (event) => {
     let axis: number[] = [];
     let button: boolean[] = [];
 
@@ -81,11 +80,6 @@ var connectedDevices = [];
 var previousInputs = [];
 
 export const HIDManager = (props: HIDManagerProps) => {
-    const [inputReports, setInputReports] = React.useState([]);
-    const [easyInputReports, setEasyInputReports] = React.useState<
-        EasyInputFormat[]
-    >([]);
-    const [rebindHandlerCounter, setRebindHandlerCounter] = React.useState(0);
 
     const connectDevice = () => {
         (window.navigator as any).hid
@@ -98,6 +92,7 @@ export const HIDManager = (props: HIDManagerProps) => {
     };
 
     const addDevice = (device) => {
+        device.oninputreport = handleInputReport;
         if (connectedDevices.includes(device)) {
             console.info("device already in connectedDevices");
             return;
@@ -107,7 +102,6 @@ export const HIDManager = (props: HIDManagerProps) => {
         connectedDevices.push(device);
         console.info("device added:", device);
         printDeviceInfo(device);
-        setRebindHandlerCounter(rebindHandlerCounter + 1);
     };
 
     const removeDevice = (device) => {
@@ -128,19 +122,24 @@ export const HIDManager = (props: HIDManagerProps) => {
 
             if (previousInputs[index] == buffer) return;
 
-            // console.warn(event.device);
-
             previousInputs[index] = buffer;
 
-            let newInputReports = _.cloneDeep(inputReports);
-            newInputReports[index] = buffer;
+            const currentReport = parseInputReport(event);
 
-            let neweasyInputReports = _.cloneDeep(easyInputReports);
-            neweasyInputReports[index] = parseInputReport(event);
+            let result: EasyInputFormat = {
+                deviceName: event.device.productName,
+                rawData: buffer,
+                axis: currentReport.axis,
+                button: currentReport.button,
+            };
 
-            setInputReports(newInputReports);
-            setEasyInputReports(neweasyInputReports);
-            setRebindHandlerCounter(rebindHandlerCounter + 1);
+            connectedDevices.forEach((device) => {
+                device.oninputreport = handleInputReport;
+            });
+
+            if (props.onInputReport) {
+                props.onInputReport(index, result);
+            }
         }
     };
 
@@ -156,67 +155,25 @@ export const HIDManager = (props: HIDManagerProps) => {
 
         return () => {};
     }, []);
-
-    React.useEffect(() => {
-        const nav = window.navigator as any;
-        nav.hid.onconnect = (e) => {
-            addDevice(e.device);
-        };
-        nav.hid.ondisconnect = (e) => {
-            removeDevice(e.device);
-        };
-
-        return () => {};
-    }, []);
-
+    
     React.useEffect(() => {
         // reregister the handlers on all connected devices whenbever a dependency changes
         // this is the hack that needs to be done to bridge non react with react and having "state" or handlers outside of react.
         connectedDevices.forEach((device) => {
             device.oninputreport = handleInputReport;
         });
-    }, [rebindHandlerCounter, inputReports]);
+    }, [connectedDevices]);
 
     return (
         <>
-            <Grid container spacing={3}>
-                <Grid container item xs={12} spacing={2}>
-                    <Button
-                        variant="contained"
-                        onClick={(event) => {
-                            connectDevice();
-                        }}
-                    >
-                        Connect Device
-                    </Button>
-                </Grid>
-                {inputReports.map((inputReport, i) => {
-                    const easyInputReport = easyInputReports[i];
-                    return (
-                        <Grid container item xs={12} spacing={2} key={i}>
-                            <FormControl fullWidth>
-                                <Paper>
-                                    <Box margin={1}>
-                                        <FormControl fullWidth>
-                                            <TextField
-                                                multiline={true}
-                                                value={inputReport}
-                                            ></TextField>
-                                        </FormControl>
-                                    </Box>
-                                    <Box margin={1}>
-                                        {easyInputReport && (
-                                            <ButtonList
-                                                button={easyInputReport.button}
-                                            />
-                                        )}
-                                    </Box>
-                                </Paper>
-                            </FormControl>
-                        </Grid>
-                    );
-                })}
-            </Grid>
+            <Button
+                variant="contained"
+                onClick={(event) => {
+                    connectDevice();
+                }}
+            >
+                Connect Device
+            </Button>
         </>
     );
 };
