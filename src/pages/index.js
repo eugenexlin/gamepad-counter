@@ -7,7 +7,7 @@ const IndexPage = () => {
     return (
         <main>
             <title>gamepad viewer</title>
-            <Box padding={2}>
+            <Box padding={1}>
                 <DebugLand></DebugLand>
             </Box>
         </main>

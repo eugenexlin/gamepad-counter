@@ -22,13 +22,24 @@ export interface HIDManagerProps {
         connectedHIDIndex: number,
         inputReport: EasyInputFormat,
     ) => any;
+    onButtonDown?: (gamepadIndex: number, buttonIndex: number) => any;
+    onButtonUp?: (gamepadIndex: number, buttonIndex: number) => any;
+    onAxisChange?: (
+        gamepadIndex: number,
+        axisIndex: number,
+        axisValue: number,
+    ) => any;
 }
 
 export interface EasyInputFormat {
     deviceName: string;
     rawData: string;
-    axis: number[];
+    axis: Axis[]; // normalize to [-1.0, 1.0]
     button: boolean[];
+}
+export interface Axis {
+    value: number;
+    maxValue: number;
 }
 
 const getBitFromUint8Array = (arr, offset) => {
@@ -36,6 +47,19 @@ const getBitFromUint8Array = (arr, offset) => {
     const bitIndex = offset % 8;
 
     return getBitFromIndex(arr[index], bitIndex);
+};
+const getValueFromUint8Array = (arr, offset, size) => {
+
+    const index = Math.floor(offset / 8);
+    const units = size / 8
+    let total = 0;
+    // it seems like joystick 16 bit will be reversed endian, so we loop high index to low
+    for (let i = units - 1; i >= 0; i--){
+        total = total << 8
+        total = total + arr[index + i];
+    }
+
+    return total;
 };
 
 const getBitFromIndex = (num, index) => {
@@ -45,7 +69,7 @@ const getBitFromIndex = (num, index) => {
 };
 
 const parseInputReport = (event) => {
-    let axis: number[] = [];
+    let axis: Axis[] = [];
     let button: boolean[] = [];
 
     const reportData = new Uint8Array(event.data.buffer);
@@ -54,7 +78,7 @@ const parseInputReport = (event) => {
     // lets fetch the buttons 1 bit at a time. wow hard coded object heirarchy yay
     const inputReports = event.device.collections[0].inputReports[0].items;
 
-    let offset = 0;
+    let offset = 0; 
     for (let ri = 0; ri < inputReports.length; ri++) {
         const inputReport = inputReports[ri];
         // assume report count > 1 means button
@@ -62,6 +86,18 @@ const parseInputReport = (event) => {
             for (let i = 0; i < inputReport.reportCount; i++) {
                 const b = getBitFromUint8Array(reportData, offset + i);
                 button.push(!!b);
+            }
+        } else {
+            if (inputReport.isLinear && !inputReport.isRange) {
+                const size = inputReport.reportSize;
+
+                const axisMax = (1 << size)
+                const axisValue = getValueFromUint8Array(reportData, offset, size);
+
+                axis.push({
+                    maxValue: axisMax,
+                    value: axisValue,
+                })
             }
         }
         offset = offset + inputReport.reportCount * inputReport.reportSize;
@@ -78,8 +114,18 @@ const parseInputReport = (event) => {
 // MAYBE because the handler function doesnt have the
 var connectedDevices = [];
 var previousInputs = [];
+var previous2Axis = [];
+
+
+const checkDupeOrNoise = (input: EasyInputFormat): boolean => {
+    // if buttons are different sent it through no matter what
+
+
+    return false;
+}
 
 export const HIDManager = (props: HIDManagerProps) => {
+    const [rebindHandlerCounter, setRebindHandlerCounter] = React.useState(0);
 
     const connectDevice = () => {
         (window.navigator as any).hid
@@ -92,7 +138,6 @@ export const HIDManager = (props: HIDManagerProps) => {
     };
 
     const addDevice = (device) => {
-        device.oninputreport = handleInputReport;
         if (connectedDevices.includes(device)) {
             console.info("device already in connectedDevices");
             return;
@@ -100,6 +145,8 @@ export const HIDManager = (props: HIDManagerProps) => {
         // use a simple array expansion
         if (!device.opened) device.open();
         connectedDevices.push(device);
+
+        device.oninputreport = handleInputReport;
         console.info("device added:", device);
         printDeviceInfo(device);
     };
@@ -120,26 +167,30 @@ export const HIDManager = (props: HIDManagerProps) => {
             const reportData = new Uint8Array(event.data.buffer);
             for (const byte of reportData) buffer += " " + hex8(byte);
 
-            if (previousInputs[index] == buffer) return;
+            if (previousInputs[index] == buffer) {
+                return;
+            }
 
-            previousInputs[index] = buffer;
-
-            const currentReport = parseInputReport(event);
+            const parsed = parseInputReport(event);
 
             let result: EasyInputFormat = {
                 deviceName: event.device.productName,
                 rawData: buffer,
-                axis: currentReport.axis,
-                button: currentReport.button,
+                axis: parsed.axis,
+                button: parsed.button,
             };
 
-            connectedDevices.forEach((device) => {
-                device.oninputreport = handleInputReport;
-            });
+            // here specifically we test for dupe input particularly jiggly joystick
+            if (checkDupeOrNoise(result)) {
+                return;
+            }
+
+            previousInputs[index] = buffer;
 
             if (props.onInputReport) {
                 props.onInputReport(index, result);
             }
+            setRebindHandlerCounter(rebindHandlerCounter + 1);
         }
     };
 
@@ -155,25 +206,27 @@ export const HIDManager = (props: HIDManagerProps) => {
 
         return () => {};
     }, []);
-    
+
     React.useEffect(() => {
         // reregister the handlers on all connected devices whenbever a dependency changes
         // this is the hack that needs to be done to bridge non react with react and having "state" or handlers outside of react.
         connectedDevices.forEach((device) => {
             device.oninputreport = handleInputReport;
         });
-    }, [connectedDevices]);
+    }, [rebindHandlerCounter]);
 
     return (
         <>
-            <Button
-                variant="contained"
-                onClick={(event) => {
-                    connectDevice();
-                }}
-            >
-                Connect Device
-            </Button>
+            <Box>
+                <Button
+                    variant="contained"
+                    onClick={(event) => {
+                        connectDevice();
+                    }}
+                >
+                    Connect Device
+                </Button>
+            </Box>
         </>
     );
 };

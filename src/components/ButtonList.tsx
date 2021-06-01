@@ -9,6 +9,8 @@ const buttonStyle: React.CSSProperties = {
 	lineHeight: "32px",
 	textAlign: "center",
 	backgroundColor: "#FFFR",
+	fontFamily: "monospace",
+	margin: "0 2px",
 }
 const pressedButtonStyle: React.CSSProperties = {
 	display: "inline-block",
@@ -18,7 +20,10 @@ const pressedButtonStyle: React.CSSProperties = {
 	height: "32px",
 	lineHeight: "32px",
 	textAlign: "center",
-	backgroundColor: "#FAA",
+	backgroundColor: "#F88",
+	borderColor: "#800",
+	fontFamily: "monospace",
+	margin: "0 2px",
 }
 
 export interface ButtonProps {

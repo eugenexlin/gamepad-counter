@@ -1,8 +1,15 @@
 import React from "react";
 import _ from "lodash";
-import { Box, FormControl, Grid, Paper, TextField } from "@material-ui/core";
-import { HIDManager, EasyInputFormat } from "../components/HIDManager";
+import {
+    Box,
+    FormControl,
+    LinearProgress,
+    Paper,
+    TextField,
+} from "@material-ui/core";
+import { HIDManager, EasyInputFormat, Axis } from "../components/HIDManager";
 import { ButtonList } from "../components/ButtonList";
+import { AxisBar } from "../components/AxisBar";
 
 export const DebugLand = () => {
     const [inputReports, setInputReports] = React.useState<EasyInputFormat[]>(
@@ -17,13 +24,12 @@ export const DebugLand = () => {
 
     return (
         <>
-            <Box marginBottom={3}>
+            <Box margin={1}>
                 <HIDManager onInputReport={handleInputReport}></HIDManager>
             </Box>
             {inputReports.map((inputReport, i) => {
-                const easyInputReport = inputReports[i];
                 return (
-                    <Box key={i}>
+                    <Box key={i} margin={1}>
                         <FormControl fullWidth>
                             <Paper>
                                 <Box margin={1}>
@@ -43,11 +49,18 @@ export const DebugLand = () => {
                                     </FormControl>
                                 </Box>
                                 <Box margin={1}>
-                                    {easyInputReport && (
-                                        <ButtonList
-                                            button={easyInputReport.button}
-                                        />
-                                    )}
+                                    <ButtonList button={inputReport.button} />
+                                </Box>
+                                <Box margin={1}>
+                                    {inputReport.axis.map((axis: Axis, i) => {
+                                        return (
+                                            <FormControl fullWidth>
+                                                <AxisBar
+												axis={axis}
+                                                />
+                                            </FormControl>
+                                        );
+                                    })}
                                 </Box>
                             </Paper>
                         </FormControl>
