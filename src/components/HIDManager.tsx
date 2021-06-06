@@ -5,17 +5,46 @@ import { hex8, printDeviceInfo } from "../utils/HIDUtils";
 import {
     Button,
     Grid,
+    GridList,
+    GridListTile,
     TextField,
     FormControl,
     Paper,
+    Card,
+    CardContent,
+    CardActions,
     Box,
 } from "@material-ui/core";
-import { ButtonList } from "./ButtonList";
+import Typography from "@material-ui/core/Typography";
+import { Theme, createStyles, makeStyles } from "@material-ui/core/styles";
 
 // uses code by nondebug
 // https://github.com/nondebug/webhid-explorer
 
 // this class just lets you handle hid inputs in a react way
+
+const useStyles = makeStyles((theme: Theme) =>
+    createStyles({
+        root: {
+            flexGrow: 1,
+            overflow: "visible",
+        },
+        tile: {},
+        fixedBottomLeft: {
+            position: "absolute",
+            bottom: 0,
+            left: 0,
+        },
+        card: {
+            margin: "2px",
+            height: "95%",
+            textAlign: "center",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+        },
+    }),
+);
 
 export interface HIDManagerProps {
     onInputReport: (
@@ -29,6 +58,7 @@ export interface HIDManagerProps {
         axisIndex: number,
         axisValue: number,
     ) => any;
+    onDeviceRemoved?: (index: number) => any;
 }
 
 export interface EasyInputFormat {
@@ -49,13 +79,12 @@ const getBitFromUint8Array = (arr, offset) => {
     return getBitFromIndex(arr[index], bitIndex);
 };
 const getValueFromUint8Array = (arr, offset, size) => {
-
     const index = Math.floor(offset / 8);
-    const units = size / 8
+    const units = size / 8;
     let total = 0;
     // it seems like joystick 16 bit will be reversed endian, so we loop high index to low
-    for (let i = units - 1; i >= 0; i--){
-        total = total << 8
+    for (let i = units - 1; i >= 0; i--) {
+        total = total << 8;
         total = total + arr[index + i];
     }
 
@@ -78,7 +107,7 @@ const parseInputReport = (event) => {
     // lets fetch the buttons 1 bit at a time. wow hard coded object heirarchy yay
     const inputReports = event.device.collections[0].inputReports[0].items;
 
-    let offset = 0; 
+    let offset = 0;
     for (let ri = 0; ri < inputReports.length; ri++) {
         const inputReport = inputReports[ri];
         // assume report count > 1 means button
@@ -91,13 +120,17 @@ const parseInputReport = (event) => {
             if (inputReport.isLinear && !inputReport.isRange) {
                 const size = inputReport.reportSize;
 
-                const axisMax = (1 << size)
-                const axisValue = getValueFromUint8Array(reportData, offset, size);
+                const axisMax = 1 << size;
+                const axisValue = getValueFromUint8Array(
+                    reportData,
+                    offset,
+                    size,
+                );
 
                 axis.push({
                     maxValue: axisMax,
                     value: axisValue,
-                })
+                });
             }
         }
         offset = offset + inputReport.reportCount * inputReport.reportSize;
@@ -113,19 +146,64 @@ const parseInputReport = (event) => {
 // and there is a problem with the handler not getting the accurate value
 // MAYBE because the handler function doesnt have the
 var connectedDevices = [];
+
 var previousInputs = [];
 var previous2Axis = [];
 
+const renderDisconnectButton = (classes, removeDevice) => {
+    return (
+        <GridList cols={6} cellHeight={120}>
+            {connectedDevices.map((device, index) => (
+                <GridListTile
+                    className={classes.tile}
+                    key={device.productName}
+                    cols={1}
+                >
+                    <Card className={classes.card}>
+                        <CardContent>
+                            <Typography
+                                variant="body1"
+                                color="textPrimary"
+                                component="p"
+                            >
+                                Connect Slot {index}
+                            </Typography>
+                            <Typography
+                                variant="body1"
+                                color="textSecondary"
+                                component="p"
+                            >
+                                {device.productName}
+                            </Typography>
+                        </CardContent>
+                        <CardActions className={classes.fixedBottomLeft}>
+                            <Button
+                                size="small"
+                                onClick={() => {
+                                    removeDevice(device);
+                                }}
+                            >
+                                Remove
+                            </Button>
+                        </CardActions>
+                    </Card>
+                </GridListTile>
+            ))}
+        </GridList>
+    );
+};
 
 const checkDupeOrNoise = (input: EasyInputFormat): boolean => {
     // if buttons are different sent it through no matter what
 
-
     return false;
-}
+};
 
 export const HIDManager = (props: HIDManagerProps) => {
+    const classes = useStyles();
+
     const [rebindHandlerCounter, setRebindHandlerCounter] = React.useState(0);
+    const [HIDCount, setHIDCount] = React.useState(0);
 
     const connectDevice = () => {
         (window.navigator as any).hid
@@ -146,7 +224,8 @@ export const HIDManager = (props: HIDManagerProps) => {
         if (!device.opened) device.open();
         connectedDevices.push(device);
 
-        device.oninputreport = handleInputReport;
+        // device.oninputreport = handleInputReport;
+        setHIDCount(connectedDevices.length);
         console.info("device added:", device);
         printDeviceInfo(device);
     };
@@ -156,6 +235,10 @@ export const HIDManager = (props: HIDManagerProps) => {
         const index = connectedDevices.indexOf(device);
         if (index >= 0) {
             connectedDevices.splice(index, 1);
+            setHIDCount(connectedDevices.length);
+            if (props.onDeviceRemoved) {
+                props.onDeviceRemoved(index);
+            }
         }
     };
 
@@ -213,11 +296,11 @@ export const HIDManager = (props: HIDManagerProps) => {
         connectedDevices.forEach((device) => {
             device.oninputreport = handleInputReport;
         });
-    }, [rebindHandlerCounter]);
+    }, [rebindHandlerCounter, HIDCount]);
 
     return (
-        <>
-            <Box>
+        <Grid container className={classes.root} spacing={2}>
+            <Grid item xs={12}>
                 <Button
                     variant="contained"
                     onClick={(event) => {
@@ -226,7 +309,10 @@ export const HIDManager = (props: HIDManagerProps) => {
                 >
                     Connect Device
                 </Button>
-            </Box>
-        </>
+            </Grid>
+            <Grid item xs={12}>
+                {renderDisconnectButton(classes, removeDevice)}
+            </Grid>
+        </Grid>
     );
 };

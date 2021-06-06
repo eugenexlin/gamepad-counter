@@ -16,6 +16,13 @@ export const DebugLand = () => {
         [],
     );
 
+    const handleRemoveReport = (index: number) => {
+        if (index >= 0 && inputReports.length > index) {
+            const array = [...inputReports];
+            array.splice(index, 1);
+            setInputReports(array);
+        }
+    };
     const handleInputReport = (index: number, report: EasyInputFormat) => {
         let newInputReports = inputReports.slice();
         newInputReports[index] = report;
@@ -24,12 +31,18 @@ export const DebugLand = () => {
 
     return (
         <>
-            <Box margin={1}>
-                <HIDManager onInputReport={handleInputReport}></HIDManager>
+            <Box marginBottom={1}>
+                <HIDManager
+                    onInputReport={handleInputReport}
+                    onDeviceRemoved={handleRemoveReport}
+                ></HIDManager>
             </Box>
             {inputReports.map((inputReport, i) => {
+                if (!inputReport) {
+                    return <></>;
+                }
                 return (
-                    <Box key={i} margin={1}>
+                    <Box marginBottom={1}>
                         <FormControl fullWidth>
                             <Paper>
                                 <Box margin={1}>
@@ -55,9 +68,7 @@ export const DebugLand = () => {
                                     {inputReport.axis.map((axis: Axis, i) => {
                                         return (
                                             <FormControl fullWidth>
-                                                <AxisBar
-												axis={axis}
-                                                />
+                                                <AxisBar axis={axis} />
                                             </FormControl>
                                         );
                                     })}
