@@ -47,7 +47,7 @@ const useStyles = makeStyles((theme: Theme) =>
 );
 
 export interface HIDManagerProps {
-    onInputReport: (
+    onInputReport?: (
         connectedHIDIndex: number,
         inputReport: EasyInputFormat,
     ) => any;
@@ -59,6 +59,9 @@ export interface HIDManagerProps {
         axisValue: number,
     ) => any;
     onDeviceRemoved?: (index: number) => any;
+
+    // so we need the manager to appear everywhere, but
+    IsRenderUI?: boolean;
 }
 
 export interface EasyInputFormat {
@@ -298,21 +301,28 @@ export const HIDManager = (props: HIDManagerProps) => {
         });
     }, [rebindHandlerCounter, HIDCount]);
 
-    return (
-        <Grid container className={classes.root} spacing={2}>
-            <Grid item xs={12}>
-                <Button
-                    variant="contained"
-                    onClick={(event) => {
-                        connectDevice();
-                    }}
-                >
-                    Connect Device
-                </Button>
+    const isRender: boolean =
+        props.IsRenderUI === undefined ? true : !!props.IsRenderUI;
+
+    if (isRender) {
+        return (
+            <Grid container className={classes.root} spacing={2}>
+                <Grid item xs={12}>
+                    <Button
+                        variant="contained"
+                        onClick={(event) => {
+                            connectDevice();
+                        }}
+                    >
+                        Connect Device
+                    </Button>
+                </Grid>
+                <Grid item xs={12}>
+                    {renderDisconnectButton(classes, removeDevice)}
+                </Grid>
             </Grid>
-            <Grid item xs={12}>
-                {renderDisconnectButton(classes, removeDevice)}
-            </Grid>
-        </Grid>
-    );
+        );
+    } else {
+        return null;
+    }
 };

@@ -7,37 +7,18 @@ import {
     Paper,
     TextField,
 } from "@material-ui/core";
-import { HIDManager, EasyInputFormat, Axis } from "../components/HIDManager";
+import { EasyInputFormat, Axis } from "../components/HIDManager";
 import { ButtonList } from "../components/ButtonList";
 import { AxisBar } from "../components/AxisBar";
 
-export const DebugLand = () => {
-    const [inputReports, setInputReports] = React.useState<EasyInputFormat[]>(
-        [],
-    );
+export interface DebugLandProps {
+    inputReports: EasyInputFormat[];
+}
 
-    const handleRemoveReport = (index: number) => {
-        if (index >= 0 && inputReports.length > index) {
-            const array = [...inputReports];
-            array.splice(index, 1);
-            setInputReports(array);
-        }
-    };
-    const handleInputReport = (index: number, report: EasyInputFormat) => {
-        let newInputReports = inputReports.slice();
-        newInputReports[index] = report;
-        setInputReports(newInputReports);
-    };
-
+export const DebugLand = (props: DebugLandProps) => {
     return (
         <>
-            <Box marginBottom={1}>
-                <HIDManager
-                    onInputReport={handleInputReport}
-                    onDeviceRemoved={handleRemoveReport}
-                ></HIDManager>
-            </Box>
-            {inputReports.map((inputReport, i) => {
+            {props.inputReports.map((inputReport, i) => {
                 if (!inputReport) {
                     return <></>;
                 }
