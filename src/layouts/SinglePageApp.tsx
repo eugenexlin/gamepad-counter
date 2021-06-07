@@ -98,7 +98,7 @@ const mapPageToIcon = (page: pages) => {
 export const SinglePageApp = () => {
     const [mobileOpen, setMobileOpen] = React.useState(false);
 
-    const [page, setPage] = React.useState<pages>(pages.CONNECT);
+    const [currentPage, setCurrentPage] = React.useState<pages>(pages.CONNECT);
 
     const classes = useStyles();
     const theme = useTheme();
@@ -119,7 +119,7 @@ export const SinglePageApp = () => {
         }
     };
     const handleInputReport = (index: number, report: EasyInputFormat) => {
-        if (page !== pages.CONNECT) {
+        if (currentPage !== pages.CONNECT) {
             return;
         }
         let newInputReports = inputReports.slice();
@@ -140,8 +140,9 @@ export const SinglePageApp = () => {
                     <ListItem
                         button
                         onClick={() => {
-                            setPage(page);
+                            setCurrentPage(page);
                         }}
+						selected={currentPage === page }
                     >
                         <ListItemIcon>{mapPageToIcon(page)}</ListItemIcon>
                         <ListItemText primary={mapPageToTitle(page)} />
@@ -166,7 +167,7 @@ export const SinglePageApp = () => {
                         {/* <MenuIcon /> */}
                     </IconButton>
                     <Typography variant="h6" noWrap>
-                        {mapPageToTitle(page)}
+                        {mapPageToTitle(currentPage)}
                     </Typography>
                 </Toolbar>
             </AppBar>
@@ -204,12 +205,12 @@ export const SinglePageApp = () => {
                 <div className={classes.toolbar} />
                 <Box marginBottom={"24px"}>
                     <HIDManager
-                        IsRenderUI={page === pages.CONNECT}
+                        IsRenderUI={currentPage === pages.CONNECT}
                         onInputReport={handleInputReport}
                         onDeviceRemoved={handleRemoveReport}
                     ></HIDManager>
                 </Box>
-                {page === pages.CONNECT && (
+                {currentPage === pages.CONNECT && (
                     <DebugLand inputReports={inputReports} />
                 )}
             </main>
