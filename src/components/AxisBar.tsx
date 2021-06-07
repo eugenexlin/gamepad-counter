@@ -7,7 +7,7 @@ const outerBar: React.CSSProperties = {
 	textAlign: "center",
 	borderColor: "#000",
 	fontFamily: "monospace",
-	height: "16px",
+	height: "12px",
 	position: "relative",
 	margin: "2px"
 }
@@ -15,7 +15,7 @@ const innerBar: React.CSSProperties = {
 	textAlign: "center",
 	fontFamily: "monospace",
 	backgroundColor: "#F88",
-	height: "16px",
+	height: "10px",
 }
 
 
