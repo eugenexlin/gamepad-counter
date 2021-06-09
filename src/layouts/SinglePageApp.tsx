@@ -9,7 +9,7 @@ import {
 import CssBaseline from "@material-ui/core/CssBaseline";
 import {
     AppBar,
-	Box,
+    Box,
     Divider,
     Drawer,
     Hidden,
@@ -126,6 +126,9 @@ export const SinglePageApp = () => {
         newInputReports[index] = report;
         setInputReports(newInputReports);
     };
+    const handleButtonDown = (index: number, buttonIndex: number) => {
+        console.warn("down", index, buttonIndex);
+    };
 
     const drawer = (
         <div>
@@ -142,7 +145,7 @@ export const SinglePageApp = () => {
                         onClick={() => {
                             setCurrentPage(page);
                         }}
-						selected={currentPage === page }
+                        selected={currentPage === page}
                     >
                         <ListItemIcon>{mapPageToIcon(page)}</ListItemIcon>
                         <ListItemText primary={mapPageToTitle(page)} />
@@ -208,6 +211,7 @@ export const SinglePageApp = () => {
                         IsRenderUI={currentPage === pages.CONNECT}
                         onInputReport={handleInputReport}
                         onDeviceRemoved={handleRemoveReport}
+                        onButtonDown={handleButtonDown}
                     ></HIDManager>
                 </Box>
                 {currentPage === pages.CONNECT && (

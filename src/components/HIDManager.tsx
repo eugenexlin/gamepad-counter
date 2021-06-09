@@ -321,6 +321,28 @@ export const HIDManager = (props: HIDManagerProps) => {
                 return;
             }
 
+            // convert event to button press event if button press event is specified
+            
+            for (let i = 0; i < result.button.length; i++) {
+                if (result.button[i])
+                {
+                    if (!previousInputs[index] || !previousInputs[index].button[i])
+                    {
+                        if(props.onButtonDown){
+                            props.onButtonDown(index, i)
+                        }
+                    }
+                } else {
+                    if (previousInputs[index] && previousInputs[index].button[i])
+                    {
+                        if(props.onButtonUp){
+                            props.onButtonUp(index, i)
+                        }
+                    }
+                }
+            }
+
+
             previousInputs[index] = result;
 
             if (props.onInputReport) {
