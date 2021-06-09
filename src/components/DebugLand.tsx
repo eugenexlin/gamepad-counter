@@ -48,7 +48,7 @@ export const DebugLand = (props: DebugLandProps) => {
                                 <Box margin={1}>
                                     {inputReport.axis.map((axis: Axis, i) => {
                                         return (
-                                            <FormControl fullWidth>
+                                            <FormControl fullWidth key={i}>
                                                 <AxisBar axis={axis} />
                                             </FormControl>
                                         );

@@ -62,6 +62,10 @@ export interface HIDManagerProps {
 
     // so we need the manager to appear everywhere, but
     IsRenderUI?: boolean;
+
+    // i think a common behavior is if joystick sensor flickers between 2 values.
+    // so i will add specific detection for when joystick bounces between 2 values extremely quickly
+    IsDisableAxisJitterFilter?: boolean;
 }
 
 export interface EasyInputFormat {
@@ -150,8 +154,9 @@ const parseInputReport = (event) => {
 // MAYBE because the handler function doesnt have the
 var connectedDevices = [];
 
-var previousInputs = [];
-var previous2Axis = [];
+var previousInputs: EasyInputFormat[] = [];
+// joy index, axis index
+var previousPreviousAxis: Axis[][] = [];
 
 const renderDisconnectButton = (classes, removeDevice) => {
     return (
@@ -159,7 +164,7 @@ const renderDisconnectButton = (classes, removeDevice) => {
             {connectedDevices.map((device, index) => (
                 <GridListTile
                     className={classes.tile}
-                    key={device.productName}
+                    key={device.productName + index}
                     cols={1}
                 >
                     <Card className={classes.card}>
@@ -196,10 +201,59 @@ const renderDisconnectButton = (classes, removeDevice) => {
     );
 };
 
-const checkDupeOrNoise = (input: EasyInputFormat): boolean => {
-    // if buttons are different sent it through no matter what
+const IsDupeOrNoise = (input: EasyInputFormat, index: number, IsDisableAxisJitterFilter?:boolean): boolean => {
+    const prev = previousInputs[index];
 
-    return false;
+    // if no previous input send it
+    if (!prev) {
+        return false;
+    }
+
+    // if button length change i guess panic and just let it through
+    if (prev.button.length !== input.button.length) {
+        return false;
+    } else {
+        for (let i = 0; i < prev.button.length; i++) {
+            if (prev.button[i] !== input.button[i]) {
+                return false;
+            }
+        }
+    }
+
+    if (prev.axis.length !== input.axis.length) {
+        return false;
+    } else {
+
+        // now check if any axis is different
+        for (let i = 0; i < prev.axis.length; i++) {
+            if (prev.axis[i].value !== input.axis[i].value) {
+
+                //if we should filter joystick jitter, do extra logic on the exact same index
+                if (!IsDisableAxisJitterFilter){
+                    if (!previousPreviousAxis[index]){
+                        return false;
+                    }
+
+                    if (previousPreviousAxis[index].length !== input.axis.length) {
+                        return false;
+                    } else {
+                
+                        // now check if any axis is different
+                        for (let i = 0; i < prev.axis.length; i++) {
+                            if (previousPreviousAxis[index][i].value !== input.axis[i].value) {
+                                return false
+                            }
+                        }
+                    }
+                }else {
+                    // no jitter filter, do instantly
+                    return false
+                }
+            }
+        }
+    }
+
+    return true;
 };
 
 export const HIDManager = (props: HIDManagerProps) => {
@@ -253,10 +307,6 @@ export const HIDManager = (props: HIDManagerProps) => {
             const reportData = new Uint8Array(event.data.buffer);
             for (const byte of reportData) buffer += " " + hex8(byte);
 
-            if (previousInputs[index] == buffer) {
-                return;
-            }
-
             const parsed = parseInputReport(event);
 
             let result: EasyInputFormat = {
@@ -267,11 +317,11 @@ export const HIDManager = (props: HIDManagerProps) => {
             };
 
             // here specifically we test for dupe input particularly jiggly joystick
-            if (checkDupeOrNoise(result)) {
+            if (IsDupeOrNoise(result, index, props.IsDisableAxisJitterFilter)) {
                 return;
             }
 
-            previousInputs[index] = buffer;
+            previousInputs[index] = result;
 
             if (props.onInputReport) {
                 props.onInputReport(index, result);
