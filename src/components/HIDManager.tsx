@@ -53,6 +53,8 @@ export interface HIDManagerProps {
     ) => any;
     onButtonDown?: (gamepadIndex: number, buttonIndex: number) => any;
     onButtonUp?: (gamepadIndex: number, buttonIndex: number) => any;
+    onAxisStartIncreasing?: (gamepadIndex: number, axisIndex: number) => any;
+    onAxisStartDecreasing?: (gamepadIndex: number, axisIndex: number) => any;
     onAxisChange?: (
         gamepadIndex: number,
         axisIndex: number,
@@ -66,7 +68,15 @@ export interface HIDManagerProps {
     // i think a common behavior is if joystick sensor flickers between 2 values.
     // so i will add specific detection for when joystick bounces between 2 values extremely quickly
     IsDisableAxisJitterFilter?: boolean;
+
+    // how much you must move axis so it activates
+    AxisMoveMin?: number;
+    // how many ms until moving in the same direction would trigger again
+    AxisMoveTimeoutMillis?: number;
 }
+
+const DefaultAxisMoveMin = 2;
+const DefaultAxisMoveTimeoutMillis = 300;
 
 export interface EasyInputFormat {
     deviceName: string;
@@ -157,6 +167,12 @@ var connectedDevices = [];
 var previousInputs: EasyInputFormat[] = [];
 // joy index, axis index
 var previousPreviousAxis: Axis[][] = [];
+// the value which the axis began rest.
+var axisSettledValue: number[][] = [];
+// -1 or +1
+var axisMoveDirection: number[][] = [];
+// time millies
+var axisLastMoveTime: number[][] = [];
 
 const renderDisconnectButton = (classes, removeDevice) => {
     return (
@@ -262,6 +278,95 @@ const IsDupeOrNoise = (
     return true;
 };
 
+const processAxisEvents = (
+    input: EasyInputFormat,
+    index: number,
+    props: HIDManagerProps,
+) => {
+    const nowMS = Date.now();
+
+    // default the values if they dont exist
+    if (axisSettledValue[index] == undefined) {
+        // i think for the very first frame this value is actually NaN.. great
+        axisSettledValue[index] = input.axis.map((a: Axis) => a.value);
+    }
+    if (axisMoveDirection[index] == undefined) {
+        axisMoveDirection[index] = Array(input.axis.length).fill(0);
+    }
+    if (axisLastMoveTime[index] == undefined) {
+        axisLastMoveTime[index] = Array(input.axis.length).fill(nowMS);
+    }
+
+    const AxisMoveMin = props.AxisMoveMin
+        ? props.AxisMoveMin
+        : DefaultAxisMoveMin;
+    const AxisMoveTimeoutMillis = props.AxisMoveTimeoutMillis
+        ? props.AxisMoveTimeoutMillis
+        : DefaultAxisMoveTimeoutMillis;
+
+    // check for movement
+    for (let i = 0; i < input.axis.length; i++) {
+        if (isNaN(axisSettledValue[index][i])) {
+            axisSettledValue[index][i] = input.axis[i].value;
+        }
+        const velocity = input.axis[i].value - axisSettledValue[index][i];
+        if (velocity !== 0) {
+            const velocityDirection = velocity / Math.abs(velocity);
+            const velocityMagnitude = velocity / velocityDirection;
+
+            if (axisMoveDirection[index][i] !== velocityDirection) {
+                // move in different direction so count if we are moving more than the min move
+                if (velocityMagnitude >= AxisMoveMin) {
+                    if (velocityDirection > 0) {
+                        if (props.onAxisStartIncreasing) {
+                            props.onAxisStartIncreasing(index, i);
+                        }
+                    } else {
+                        if (props.onAxisStartDecreasing) {
+                            props.onAxisStartDecreasing(index, i);
+                        }
+                    }
+                    axisSettledValue[index][i] = input.axis[index][i];
+                    axisMoveDirection[index][i] = velocityDirection;
+                    axisLastMoveTime[index][i] = nowMS;
+                } else {
+                    // do nothing.. it is within dead zone.
+                }
+            } else {
+                // move in same direction
+
+                if (
+                    nowMS - axisLastMoveTime[index][i] >=
+                    AxisMoveTimeoutMillis
+                ) {
+                    // if the last time was longer than timeout, then it will trigger
+                    // check if threshold met
+                    if (velocityMagnitude >= AxisMoveMin) {
+                        if (velocityDirection > 0) {
+                            if (props.onAxisStartIncreasing) {
+                                props.onAxisStartIncreasing(index, i);
+                            }
+                        } else {
+                            if (props.onAxisStartDecreasing) {
+                                props.onAxisStartDecreasing(index, i);
+                            }
+                        }
+                        axisSettledValue[index][i] = input.axis[index][i];
+                        axisMoveDirection[index][i] = velocityDirection;
+                        axisLastMoveTime[index][i] = nowMS;
+                    } else {
+                        // do nothing.. it is within dead zone.
+                    }
+                } else {
+                    // if same direction, just keep updating vthe current settled value and last update time
+                    axisSettledValue[index][i] = input.axis[index][i];
+                    axisLastMoveTime[index][i] = nowMS;
+                }
+            }
+        }
+    }
+};
+
 export const HIDManager = (props: HIDManagerProps) => {
     const classes = useStyles();
 
@@ -316,7 +421,7 @@ export const HIDManager = (props: HIDManagerProps) => {
         };
         return handleInputReport(event);
     };
-    
+
     const handleInputReport = (event) => {
         const index = connectedDevices.indexOf(event.device);
 
@@ -340,7 +445,6 @@ export const HIDManager = (props: HIDManagerProps) => {
             }
 
             // convert event to button press event if button press event is specified
-
             for (let i = 0; i < result.button.length; i++) {
                 if (result.button[i]) {
                     if (
@@ -362,6 +466,9 @@ export const HIDManager = (props: HIDManagerProps) => {
                     }
                 }
             }
+
+            // process axis movements
+            processAxisEvents(result, index, props);
 
             previousInputs[index] = result;
 

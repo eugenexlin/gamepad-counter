@@ -109,6 +109,12 @@ export const SinglePageApp = () => {
 
     // [joy index][button index]
     const [buttonTally, setButtonTally] = React.useState<number[][]>([]);
+    const [axisIncreaseTally, setAxisIncreaseTally] = React.useState<
+        number[][]
+    >([]);
+    const [axisDecreaseTally, setAxisDecreaseTally] = React.useState<
+        number[][]
+    >([]);
 
     const classes = useStyles();
     const theme = useTheme();
@@ -128,6 +134,15 @@ export const SinglePageApp = () => {
             setInputReports(array);
         }
     };
+
+    const ensureTallysExist = (arr, setArr, index, count) => {
+        if (arr[index] == undefined) {
+            let nextTally = _.cloneDeep(arr);
+            nextTally[index] = Array(count).fill(0);
+            setArr(nextTally);
+        }
+    }
+
     const handleInputReport = (index: number, report: EasyInputFormat) => {
         if (currentPage !== pages.CONNECT) {
             return;
@@ -136,23 +151,47 @@ export const SinglePageApp = () => {
         newInputReports[index] = report;
         setInputReports(newInputReports);
 
-        if (buttonTally[index] == undefined) {
-            let nextTally = _.cloneDeep(buttonTally);
-            nextTally[index] = Array(report.button.length).fill(0)
-            setButtonTally(nextTally);
-        }
+        ensureTallysExist(buttonTally, setButtonTally, index, report.button.length);
+        ensureTallysExist(axisIncreaseTally, setAxisIncreaseTally, index, report.axis.length);
+        ensureTallysExist(axisDecreaseTally, setAxisDecreaseTally, index, report.axis.length);
     };
 
     const handleButtonDown = (index: number, buttonIndex: number) => {
-        let nextTally = _.cloneDeep(buttonTally);
+        incrementGeneric(index, buttonIndex, buttonTally, setButtonTally);
+    };
+
+    const handleAxisStartIncreasing = (index: number, axisIndex: number) => {
+        incrementGeneric(
+            index,
+            axisIndex,
+            axisIncreaseTally,
+            setAxisIncreaseTally,
+        );
+    };
+    const handleAxisStartDecreasing = (index: number, axisIndex: number) => {
+        incrementGeneric(
+            index,
+            axisIndex,
+            axisDecreaseTally,
+            setAxisDecreaseTally,
+        );
+    };
+
+    const incrementGeneric = (
+        index: number,
+        subIndex: number,
+        sourceArr: number[][],
+        setArray: any,
+    ) => {
+        let nextTally = _.cloneDeep(sourceArr);
         if (nextTally[index] == undefined) {
             nextTally[index] = [];
         }
-        if (nextTally[index][buttonIndex] == undefined) {
-            nextTally[index][buttonIndex] = 0;
+        if (nextTally[index][subIndex] == undefined) {
+            nextTally[index][subIndex] = 0;
         }
-        nextTally[index][buttonIndex] += 1;
-        setButtonTally(nextTally);
+        nextTally[index][subIndex] += 1;
+        setArray(nextTally);
     };
 
     const drawer = (
@@ -240,6 +279,8 @@ export const SinglePageApp = () => {
                         onInputReport={handleInputReport}
                         onDeviceRemoved={handleRemoveReport}
                         onButtonDown={handleButtonDown}
+                        onAxisStartIncreasing={handleAxisStartIncreasing}
+                        onAxisStartDecreasing={handleAxisStartDecreasing}
                     ></HIDManager>
                 </Box>
                 {currentPage === pages.CONNECT && (
@@ -249,6 +290,8 @@ export const SinglePageApp = () => {
                     <>
                         <AllTallyRenderer
                             allButtons={buttonTally}
+                            allAxisIncreases={axisIncreaseTally}
+                            allAxisDecreases={axisDecreaseTally}
                         ></AllTallyRenderer>
                     </>
                 )}
