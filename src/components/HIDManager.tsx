@@ -201,7 +201,11 @@ const renderDisconnectButton = (classes, removeDevice) => {
     );
 };
 
-const IsDupeOrNoise = (input: EasyInputFormat, index: number, IsDisableAxisJitterFilter?:boolean): boolean => {
+const IsDupeOrNoise = (
+    input: EasyInputFormat,
+    index: number,
+    IsDisableAxisJitterFilter?: boolean,
+): boolean => {
     const prev = previousInputs[index];
 
     // if no previous input send it
@@ -223,31 +227,33 @@ const IsDupeOrNoise = (input: EasyInputFormat, index: number, IsDisableAxisJitte
     if (prev.axis.length !== input.axis.length) {
         return false;
     } else {
-
         // now check if any axis is different
         for (let i = 0; i < prev.axis.length; i++) {
             if (prev.axis[i].value !== input.axis[i].value) {
-
                 //if we should filter joystick jitter, do extra logic on the exact same index
-                if (!IsDisableAxisJitterFilter){
-                    if (!previousPreviousAxis[index]){
+                if (!IsDisableAxisJitterFilter) {
+                    if (!previousPreviousAxis[index]) {
                         return false;
                     }
 
-                    if (previousPreviousAxis[index].length !== input.axis.length) {
+                    if (
+                        previousPreviousAxis[index].length !== input.axis.length
+                    ) {
                         return false;
                     } else {
-                
                         // now check if any axis is different
                         for (let i = 0; i < prev.axis.length; i++) {
-                            if (previousPreviousAxis[index][i].value !== input.axis[i].value) {
-                                return false
+                            if (
+                                previousPreviousAxis[index][i].value !==
+                                input.axis[i].value
+                            ) {
+                                return false;
                             }
                         }
                     }
-                }else {
+                } else {
                     // no jitter filter, do instantly
-                    return false
+                    return false;
                 }
             }
         }
@@ -285,6 +291,7 @@ export const HIDManager = (props: HIDManagerProps) => {
         setHIDCount(connectedDevices.length);
         console.info("device added:", device);
         printDeviceInfo(device);
+        handleInitialInputReport(device);
     };
 
     const removeDevice = (device) => {
@@ -299,6 +306,17 @@ export const HIDManager = (props: HIDManagerProps) => {
         }
     };
 
+    // hacky way of parsing the initial device so we know how many buttons we will have
+    const handleInitialInputReport = (device) => {
+        const event = {
+            data: {
+                buffer: new Uint16Array(),
+            },
+            device: device,
+        };
+        return handleInputReport(event);
+    };
+    
     const handleInputReport = (event) => {
         const index = connectedDevices.indexOf(event.device);
 
@@ -322,26 +340,28 @@ export const HIDManager = (props: HIDManagerProps) => {
             }
 
             // convert event to button press event if button press event is specified
-            
+
             for (let i = 0; i < result.button.length; i++) {
-                if (result.button[i])
-                {
-                    if (!previousInputs[index] || !previousInputs[index].button[i])
-                    {
-                        if(props.onButtonDown){
-                            props.onButtonDown(index, i)
+                if (result.button[i]) {
+                    if (
+                        !previousInputs[index] ||
+                        !previousInputs[index].button[i]
+                    ) {
+                        if (props.onButtonDown) {
+                            props.onButtonDown(index, i);
                         }
                     }
                 } else {
-                    if (previousInputs[index] && previousInputs[index].button[i])
-                    {
-                        if(props.onButtonUp){
-                            props.onButtonUp(index, i)
+                    if (
+                        previousInputs[index] &&
+                        previousInputs[index].button[i]
+                    ) {
+                        if (props.onButtonUp) {
+                            props.onButtonUp(index, i);
                         }
                     }
                 }
             }
-
 
             previousInputs[index] = result;
 

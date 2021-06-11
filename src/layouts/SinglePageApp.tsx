@@ -25,8 +25,10 @@ import {
 import UsbIcon from "@material-ui/icons/Usb";
 import CategoryIcon from "@material-ui/icons/Category";
 import DashboardIcon from "@material-ui/icons/Dashboard";
+import AssessmentIcon from "@material-ui/icons/Assessment";
 import { EasyInputFormat, HIDManager } from "../components/HIDManager";
 import { DebugLand } from "../components/DebugLand";
+import { AllTallyRenderer } from "../components/AllTallyRenderer";
 
 const drawerWidth = 240;
 
@@ -72,12 +74,15 @@ const useStyles = makeStyles((theme: Theme) =>
 
 enum pages {
     CONNECT = 0,
+    ALL_TALLY = 2,
     DASHBOARD = 1,
 }
 const mapPageToTitle = (page: pages) => {
     switch (page) {
         case pages.CONNECT:
             return "Connect Device";
+        case pages.ALL_TALLY:
+            return "Test Buttons";
         case pages.DASHBOARD:
             return "Dashboards";
         default:
@@ -88,6 +93,8 @@ const mapPageToIcon = (page: pages) => {
     switch (page) {
         case pages.CONNECT:
             return <UsbIcon />;
+        case pages.ALL_TALLY:
+            return <AssessmentIcon />;
         case pages.DASHBOARD:
             return <DashboardIcon />;
         default:
@@ -99,6 +106,9 @@ export const SinglePageApp = () => {
     const [mobileOpen, setMobileOpen] = React.useState(false);
 
     const [currentPage, setCurrentPage] = React.useState<pages>(pages.CONNECT);
+
+    // [joy index][button index]
+    const [buttonTally, setButtonTally] = React.useState<number[][]>([]);
 
     const classes = useStyles();
     const theme = useTheme();
@@ -125,9 +135,24 @@ export const SinglePageApp = () => {
         let newInputReports = inputReports.slice();
         newInputReports[index] = report;
         setInputReports(newInputReports);
+
+        if (buttonTally[index] == undefined) {
+            let nextTally = _.cloneDeep(buttonTally);
+            nextTally[index] = Array(report.button.length).fill(0)
+            setButtonTally(nextTally);
+        }
     };
+
     const handleButtonDown = (index: number, buttonIndex: number) => {
-        console.warn("down", index, buttonIndex);
+        let nextTally = _.cloneDeep(buttonTally);
+        if (nextTally[index] == undefined) {
+            nextTally[index] = [];
+        }
+        if (nextTally[index][buttonIndex] == undefined) {
+            nextTally[index][buttonIndex] = 0;
+        }
+        nextTally[index][buttonIndex] += 1;
+        setButtonTally(nextTally);
     };
 
     const drawer = (
@@ -139,18 +164,21 @@ export const SinglePageApp = () => {
             </div>
             <Divider />
             <List>
-                {[pages.CONNECT, pages.DASHBOARD].map((page) => (
-                    <ListItem
-                        button
-                        onClick={() => {
-                            setCurrentPage(page);
-                        }}
-                        selected={currentPage === page}
-                    >
-                        <ListItemIcon>{mapPageToIcon(page)}</ListItemIcon>
-                        <ListItemText primary={mapPageToTitle(page)} />
-                    </ListItem>
-                ))}
+                {[pages.CONNECT, pages.ALL_TALLY, pages.DASHBOARD].map(
+                    (page) => (
+                        <ListItem
+                            button
+                            onClick={() => {
+                                setCurrentPage(page);
+                            }}
+                            selected={currentPage === page}
+                            key={page}
+                        >
+                            <ListItemIcon>{mapPageToIcon(page)}</ListItemIcon>
+                            <ListItemText primary={mapPageToTitle(page)} />
+                        </ListItem>
+                    ),
+                )}
             </List>
         </div>
     );
@@ -216,6 +244,13 @@ export const SinglePageApp = () => {
                 </Box>
                 {currentPage === pages.CONNECT && (
                     <DebugLand inputReports={inputReports} />
+                )}
+                {currentPage === pages.ALL_TALLY && (
+                    <>
+                        <AllTallyRenderer
+                            allButtons={buttonTally}
+                        ></AllTallyRenderer>
+                    </>
                 )}
             </main>
         </div>

@@ -23,7 +23,7 @@ export const DebugLand = (props: DebugLandProps) => {
                     return <></>;
                 }
                 return (
-                    <Box marginBottom={1}>
+                    <Box marginBottom={1} key={i}>
                         <FormControl fullWidth>
                             <Paper>
                                 <Box margin={1}>
