@@ -11,7 +11,7 @@ const buttonStyle: React.CSSProperties = {
     textAlign: "center",
     backgroundColor: "#FFFR",
     fontFamily: "monospace",
-    margin: "0 2px",
+    margin: "2px 2px",
 };
 
 export interface ButtonProps {
@@ -28,11 +28,11 @@ interface ButtonTallyProps {
 }
 const ButtonTally = (props: ButtonTallyProps) => {
     return (
-        <>
+        <div>
             {props.button.map((tally, i) => (
                 <Button key={i} index={i} tally={tally}></Button>
             ))}
-        </>
+        </div>
     );
 };
 
