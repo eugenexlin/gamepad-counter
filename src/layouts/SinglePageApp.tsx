@@ -35,6 +35,10 @@ import { AllTallyRenderer } from "../components/AllTallyRenderer";
 
 const drawerWidth = 240;
 
+// HID fires events outside react livecycle so it is faster than react lifecycle can handle
+// this will let it increment properly
+var rerenderCountOutsideReact = 0;
+
 const useStyles = makeStyles((theme: Theme) =>
     createStyles({
         root: {
@@ -122,6 +126,12 @@ export const SinglePageApp = () => {
         number[][]
     >([]);
 
+    const [rerenderKey, setRerenderKey] = React.useState<number>(rerenderCountOutsideReact);
+    const incrementRerenderKey = () => {
+        rerenderCountOutsideReact = rerenderCountOutsideReact + 1;
+        setRerenderKey(rerenderCountOutsideReact);
+    }
+
     const classes = useStyles();
     const theme = useTheme();
 
@@ -178,7 +188,7 @@ export const SinglePageApp = () => {
     };
 
     const handleButtonDown = (index: number, buttonIndex: number) => {
-        incrementGeneric(index, buttonIndex, buttonTally, setButtonTally);
+        incrementGeneric(index, buttonIndex, buttonTally);
     };
 
     const handleAxisStartIncreasing = (index: number, axisIndex: number) => {
@@ -186,7 +196,6 @@ export const SinglePageApp = () => {
             index,
             axisIndex,
             axisIncreaseTally,
-            setAxisIncreaseTally,
         );
     };
     const handleAxisStartDecreasing = (index: number, axisIndex: number) => {
@@ -194,27 +203,25 @@ export const SinglePageApp = () => {
             index,
             axisIndex,
             axisDecreaseTally,
-            setAxisDecreaseTally,
         );
     };
 
     const incrementGeneric = (
         index: number,
         subIndex: number,
-        sourceArr: number[][],
-        setArray: any,
+        sourceArr: number[][]
     ) => {
-        let nextTally = [...sourceArr];
-        if (nextTally[index] == undefined) {
-            nextTally[index] = [];
+        // this is not proper react state handling, but because of race condition,
+        // i am going to modify array directly. 
+        if (sourceArr[index] == undefined) {
+            sourceArr[index] = [];
         }
-        let nextSubTally = [...nextTally[index]];
-        nextTally[index] = nextSubTally;
-        if (nextTally[index][subIndex] == undefined) {
-            nextTally[index][subIndex] = 0;
+        if (sourceArr[index][subIndex] == undefined) {
+            sourceArr[index][subIndex] = 0;
         }
-        nextTally[index][subIndex] += 1;
-        setArray(nextTally);
+        sourceArr[index][subIndex] += 1;
+        // setArray(sourceArr);
+        incrementRerenderKey();
     };
 
     const drawer = (
@@ -324,6 +331,7 @@ export const SinglePageApp = () => {
                             allButtons={buttonTally}
                             allAxisIncreases={axisIncreaseTally}
                             allAxisDecreases={axisDecreaseTally}
+                            key={rerenderKey}
                         ></AllTallyRenderer>
                     </>
                 )}

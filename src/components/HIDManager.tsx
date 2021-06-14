@@ -23,6 +23,10 @@ import { Theme, createStyles, makeStyles } from "@material-ui/core/styles";
 
 // this class just lets you handle hid inputs in a react way
 
+// i could not figure a good way to implement it to convert it to react lifecycle
+// so it is kind of sloppy
+// HID fires events outside react livecycle so it is faster than react lifecycle can handle
+
 const useStyles = makeStyles((theme: Theme) =>
     createStyles({
         root: {
@@ -381,9 +385,6 @@ const processAxisEvents = (
 export const HIDManager = (props: HIDManagerProps) => {
     const classes = useStyles();
 
-    const [rebindHandlerCounter, setRebindHandlerCounter] = React.useState(0);
-    const [HIDCount, setHIDCount] = React.useState(0);
-
     const connectDevice = () => {
         (window.navigator as any).hid
             .requestDevice({ filters: [] })
@@ -403,8 +404,7 @@ export const HIDManager = (props: HIDManagerProps) => {
         if (!device.opened) device.open();
         connectedDevices.push(device);
 
-        // device.oninputreport = handleInputReport;
-        setHIDCount(connectedDevices.length);
+        device.oninputreport = handleInputReport;
         console.info("device added:", device);
         printDeviceInfo(device);
         handleInitialInputReport(device);
@@ -415,7 +415,6 @@ export const HIDManager = (props: HIDManagerProps) => {
         const index = connectedDevices.indexOf(device);
         if (index >= 0) {
             connectedDevices.splice(index, 1);
-            setHIDCount(connectedDevices.length);
             if (props.onDeviceRemoved) {
                 props.onDeviceRemoved(index);
             }
@@ -486,7 +485,7 @@ export const HIDManager = (props: HIDManagerProps) => {
             if (props.onInputReport) {
                 props.onInputReport(index, result);
             }
-            setRebindHandlerCounter(rebindHandlerCounter + 1);
+            
         }
     };
 
@@ -503,13 +502,9 @@ export const HIDManager = (props: HIDManagerProps) => {
         return () => {};
     }, []);
 
-    React.useEffect(() => {
-        // reregister the handlers on all connected devices whenbever a dependency changes
-        // this is the hack that needs to be done to bridge non react with react and having "state" or handlers outside of react.
-        connectedDevices.forEach((device) => {
-            device.oninputreport = handleInputReport;
-        });
-    }, [rebindHandlerCounter, HIDCount]);
+    connectedDevices.forEach((device) => {
+        device.oninputreport = handleInputReport;
+    });
 
     const isRender: boolean =
         props.IsRenderUI === undefined ? true : !!props.IsRenderUI;
