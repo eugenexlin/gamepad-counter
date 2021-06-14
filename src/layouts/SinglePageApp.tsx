@@ -20,12 +20,15 @@ import {
     ListItemText,
     Toolbar,
     Typography,
+    Menu,
+    MenuItem,
 } from "@material-ui/core";
 
 import UsbIcon from "@material-ui/icons/Usb";
 import CategoryIcon from "@material-ui/icons/Category";
 import DashboardIcon from "@material-ui/icons/Dashboard";
 import AssessmentIcon from "@material-ui/icons/Assessment";
+import SettingsIcon from "@material-ui/icons/Settings";
 import { EasyInputFormat, HIDManager } from "../components/HIDManager";
 import { DebugLand } from "../components/DebugLand";
 import { AllTallyRenderer } from "../components/AllTallyRenderer";
@@ -36,6 +39,9 @@ const useStyles = makeStyles((theme: Theme) =>
     createStyles({
         root: {
             display: "flex",
+        },
+        grow: {
+          flexGrow: 1,
         },
         drawer: {
             [theme.breakpoints.up("sm")]: {
@@ -141,7 +147,7 @@ export const SinglePageApp = () => {
             nextTally[index] = Array(count).fill(0);
             setArr(nextTally);
         }
-    }
+    };
 
     const handleInputReport = (index: number, report: EasyInputFormat) => {
         if (currentPage !== pages.CONNECT) {
@@ -151,9 +157,24 @@ export const SinglePageApp = () => {
         newInputReports[index] = report;
         setInputReports(newInputReports);
 
-        ensureTallysExist(buttonTally, setButtonTally, index, report.button.length);
-        ensureTallysExist(axisIncreaseTally, setAxisIncreaseTally, index, report.axis.length);
-        ensureTallysExist(axisDecreaseTally, setAxisDecreaseTally, index, report.axis.length);
+        ensureTallysExist(
+            buttonTally,
+            setButtonTally,
+            index,
+            report.button.length,
+        );
+        ensureTallysExist(
+            axisIncreaseTally,
+            setAxisIncreaseTally,
+            index,
+            report.axis.length,
+        );
+        ensureTallysExist(
+            axisDecreaseTally,
+            setAxisDecreaseTally,
+            index,
+            report.axis.length,
+        );
     };
 
     const handleButtonDown = (index: number, buttonIndex: number) => {
@@ -187,8 +208,8 @@ export const SinglePageApp = () => {
         if (nextTally[index] == undefined) {
             nextTally[index] = [];
         }
-        let nextSubTally = [...nextTally[index]]
-        nextTally[index] = nextSubTally
+        let nextSubTally = [...nextTally[index]];
+        nextTally[index] = nextSubTally;
         if (nextTally[index][subIndex] == undefined) {
             nextTally[index][subIndex] = 0;
         }
@@ -241,9 +262,18 @@ export const SinglePageApp = () => {
                     <Typography variant="h6" noWrap>
                         {mapPageToTitle(currentPage)}
                     </Typography>
+                    <div className={classes.grow}></div>
+                    <div>
+                        <IconButton
+                            aria-label="show 4 new mails"
+                            color="inherit"
+                        >
+                            <SettingsIcon />
+                        </IconButton>
+                    </div>
                 </Toolbar>
             </AppBar>
-            <nav className={classes.drawer} aria-label="mailbox folders">
+            <nav className={classes.drawer}>
                 {/* The implementation can be swapped with js to avoid SEO duplication of links. */}
                 <Hidden smUp implementation="css">
                     <Drawer

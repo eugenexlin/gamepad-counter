@@ -3,4 +3,6 @@ module.exports = {
         title: "gamepad counter",
     },
     plugins: ["gatsby-plugin-sass", "gatsby-plugin-typescript"],
+
+    pathPrefix: "/gamepad-counter",
 };
