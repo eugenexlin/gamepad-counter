@@ -183,10 +183,12 @@ export const SinglePageApp = () => {
         sourceArr: number[][],
         setArray: any,
     ) => {
-        let nextTally = _.cloneDeep(sourceArr);
+        let nextTally = [...sourceArr];
         if (nextTally[index] == undefined) {
             nextTally[index] = [];
         }
+        let nextSubTally = [...nextTally[index]]
+        nextTally[index] = nextSubTally
         if (nextTally[index][subIndex] == undefined) {
             nextTally[index][subIndex] = 0;
         }

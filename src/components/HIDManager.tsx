@@ -76,7 +76,7 @@ export interface HIDManagerProps {
 }
 
 const DefaultAxisMoveMin = 2;
-const DefaultAxisMoveTimeoutMillis = 300;
+const DefaultAxisMoveTimeoutMillis = 250;
 
 export interface EasyInputFormat {
     deviceName: string;
@@ -309,8 +309,19 @@ const processAxisEvents = (
         if (isNaN(axisSettledValue[index][i])) {
             axisSettledValue[index][i] = input.axis[i].value;
         }
-        const velocity = input.axis[i].value - axisSettledValue[index][i];
+        let velocity = input.axis[i].value - axisSettledValue[index][i];
+        
         if (velocity !== 0) {
+            
+            // compensate the velocity if it traveled basically > 98% of the max value..
+            // we will assume it is because it wrapped around
+            if (velocity > input.axis[i].maxValue*0.98) {
+                velocity = velocity - input.axis[i].maxValue
+            }
+            if (velocity < -(input.axis[i].maxValue*0.98)) {
+                velocity = velocity + input.axis[i].maxValue
+            }
+
             const velocityDirection = velocity / Math.abs(velocity);
             const velocityMagnitude = velocity / velocityDirection;
 

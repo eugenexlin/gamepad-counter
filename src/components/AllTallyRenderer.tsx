@@ -18,8 +18,20 @@ const axisContainer: React.CSSProperties = {
     flexDirection: "column",
 };
 
-const axisStyle: React.CSSProperties = {
-    borderRadius: "2px",
+const axisStyleTop: React.CSSProperties = {
+    borderRadius: "8px 8px 2px 2px",
+    border: "solid 1px",
+    width: "90px",
+    height: "30px",
+    lineHeight: "30px",
+    textAlign: "center",
+    backgroundColor: "#FFFR",
+    fontFamily: "monospace",
+    margin: "2px 2px",
+};
+
+const axisStyleBottom: React.CSSProperties = {
+    borderRadius: "2px 2px 8px 8px",
     border: "solid 1px",
     width: "90px",
     height: "30px",
@@ -59,10 +71,10 @@ export interface AxisProps {
 const Axis = (props: AxisProps) => {
     return (
         <span style={axisContainer}>
-            <div style={axisStyle}>
+            <div style={axisStyleTop}>
                 {props.increaseTally ? props.increaseTally : 0}
             </div>
-            <div style={axisStyle}>
+            <div style={axisStyleBottom}>
                 {props.decreaseTally ? props.decreaseTally : 0}
             </div>
         </span>
