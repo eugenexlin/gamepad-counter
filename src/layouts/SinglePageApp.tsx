@@ -22,6 +22,7 @@ import {
     Typography,
     Menu,
     MenuItem,
+    Collapse,
 } from "@material-ui/core";
 
 import UsbIcon from "@material-ui/icons/Usb";
@@ -29,9 +30,14 @@ import CategoryIcon from "@material-ui/icons/Category";
 import DashboardIcon from "@material-ui/icons/Dashboard";
 import AssessmentIcon from "@material-ui/icons/Assessment";
 import SettingsIcon from "@material-ui/icons/Settings";
+import FolderSharedIcon from "@material-ui/icons/FolderShared";
 import { EasyInputFormat, HIDManager } from "../components/HIDManager";
 import { DebugLand } from "../components/DebugLand";
 import { AllTallyRenderer } from "../components/AllTallyRenderer";
+import { ExpandLess, ExpandMore, StarBorder } from "@material-ui/icons";
+import { TallySet } from "../models/DashboardModels";
+import { TallySetLayout } from "../components/TallySetLayout";
+import { INFINITAS_DP } from "../models/Presets";
 
 const drawerWidth = 240;
 
@@ -45,7 +51,7 @@ const useStyles = makeStyles((theme: Theme) =>
             display: "flex",
         },
         grow: {
-          flexGrow: 1,
+            flexGrow: 1,
         },
         drawer: {
             [theme.breakpoints.up("sm")]: {
@@ -78,6 +84,9 @@ const useStyles = makeStyles((theme: Theme) =>
         content: {
             flexGrow: 1,
             padding: theme.spacing(3),
+        },
+        nested: {
+            paddingLeft: theme.spacing(4),
         },
     }),
 );
@@ -117,6 +126,8 @@ export const SinglePageApp = () => {
 
     const [currentPage, setCurrentPage] = React.useState<pages>(pages.CONNECT);
 
+    const [isPresetsOpen, setIsPresetsOpen] = React.useState(true);
+
     // [joy index][button index]
     const [buttonTally, setButtonTally] = React.useState<number[][]>([]);
     const [axisIncreaseTally, setAxisIncreaseTally] = React.useState<
@@ -126,11 +137,13 @@ export const SinglePageApp = () => {
         number[][]
     >([]);
 
-    const [rerenderKey, setRerenderKey] = React.useState<number>(rerenderCountOutsideReact);
+    const [rerenderKey, setRerenderKey] = React.useState<number>(
+        rerenderCountOutsideReact,
+    );
     const incrementRerenderKey = () => {
         rerenderCountOutsideReact = rerenderCountOutsideReact + 1;
         setRerenderKey(rerenderCountOutsideReact);
-    }
+    };
 
     const classes = useStyles();
     const theme = useTheme();
@@ -142,6 +155,8 @@ export const SinglePageApp = () => {
     const [inputReports, setInputReports] = React.useState<EasyInputFormat[]>(
         [],
     );
+
+    const [tallySet, setTallySet] = React.useState<TallySet>({});
 
     const handleRemoveReport = (index: number) => {
         if (index >= 0 && inputReports.length > index) {
@@ -192,27 +207,19 @@ export const SinglePageApp = () => {
     };
 
     const handleAxisStartIncreasing = (index: number, axisIndex: number) => {
-        incrementGeneric(
-            index,
-            axisIndex,
-            axisIncreaseTally,
-        );
+        incrementGeneric(index, axisIndex, axisIncreaseTally);
     };
     const handleAxisStartDecreasing = (index: number, axisIndex: number) => {
-        incrementGeneric(
-            index,
-            axisIndex,
-            axisDecreaseTally,
-        );
+        incrementGeneric(index, axisIndex, axisDecreaseTally);
     };
 
     const incrementGeneric = (
         index: number,
         subIndex: number,
-        sourceArr: number[][]
+        sourceArr: number[][],
     ) => {
         // this is not proper react state handling, but because of race condition,
-        // i am going to modify array directly. 
+        // i am going to modify array directly.
         if (sourceArr[index] == undefined) {
             sourceArr[index] = [];
         }
@@ -248,6 +255,37 @@ export const SinglePageApp = () => {
                         </ListItem>
                     ),
                 )}
+                <ListItem
+                    button
+                    onClick={() => {
+                        setIsPresetsOpen(!isPresetsOpen);
+                    }}
+                    key={"PRESETS_DRAWER_ITEM"}
+                >
+                    <ListItemIcon>
+                        <FolderSharedIcon />
+                    </ListItemIcon>
+                    <ListItemText primary={"Presets"} />
+                    {isPresetsOpen ? <ExpandLess /> : <ExpandMore />}
+                </ListItem>
+
+                <Collapse in={isPresetsOpen} timeout="auto" unmountOnExit>
+                    <List component="div" disablePadding>
+                        <ListItem
+                            button
+                            onClick={() => {
+                                setCurrentPage(pages.DASHBOARD);
+                                setTallySet(INFINITAS_DP);
+                            }}
+                            className={classes.nested}
+                        >
+                            <ListItemIcon>
+                                <DashboardIcon />
+                            </ListItemIcon>
+                            <ListItemText primary="Infinitas DP" />
+                        </ListItem>
+                    </List>
+                </Collapse>
             </List>
         </div>
     );
@@ -312,28 +350,33 @@ export const SinglePageApp = () => {
             </nav>
             <main className={classes.content}>
                 <div className={classes.toolbar} />
-                <Box marginBottom={"24px"}>
-                    <HIDManager
-                        IsRenderUI={currentPage === pages.CONNECT}
-                        onInputReport={handleInputReport}
-                        onDeviceRemoved={handleRemoveReport}
-                        onButtonDown={handleButtonDown}
-                        onAxisStartIncreasing={handleAxisStartIncreasing}
-                        onAxisStartDecreasing={handleAxisStartDecreasing}
-                    ></HIDManager>
-                </Box>
+                <HIDManager
+                    IsRenderUI={currentPage === pages.CONNECT}
+                    onInputReport={handleInputReport}
+                    onDeviceRemoved={handleRemoveReport}
+                    onButtonDown={handleButtonDown}
+                    onAxisStartIncreasing={handleAxisStartIncreasing}
+                    onAxisStartDecreasing={handleAxisStartDecreasing}
+                ></HIDManager>
                 {currentPage === pages.CONNECT && (
                     <DebugLand inputReports={inputReports} />
                 )}
                 {currentPage === pages.ALL_TALLY && (
-                    <>
-                        <AllTallyRenderer
-                            allButtons={buttonTally}
-                            allAxisIncreases={axisIncreaseTally}
-                            allAxisDecreases={axisDecreaseTally}
-                            key={rerenderKey}
-                        ></AllTallyRenderer>
-                    </>
+                    <AllTallyRenderer
+                        allButtons={buttonTally}
+                        allAxisIncreases={axisIncreaseTally}
+                        allAxisDecreases={axisDecreaseTally}
+                        key={rerenderKey}
+                    ></AllTallyRenderer>
+                )}
+                {currentPage === pages.DASHBOARD && (
+                    <TallySetLayout
+                        allButtons={buttonTally}
+                        allAxisIncreases={axisIncreaseTally}
+                        allAxisDecreases={axisDecreaseTally}
+                        tallySet={tallySet}
+                        key={rerenderKey}
+                    ></TallySetLayout>
                 )}
             </main>
         </div>
