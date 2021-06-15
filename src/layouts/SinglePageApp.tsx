@@ -29,6 +29,7 @@ import CategoryIcon from "@material-ui/icons/Category";
 import DashboardIcon from "@material-ui/icons/Dashboard";
 import AssessmentIcon from "@material-ui/icons/Assessment";
 import SettingsIcon from "@material-ui/icons/Settings";
+import OpenInNewIcon from '@material-ui/icons/OpenInNew';
 import { EasyInputFormat, HIDManager } from "../components/HIDManager";
 import { DebugLand } from "../components/DebugLand";
 import { AllTallyRenderer } from "../components/AllTallyRenderer";
@@ -265,7 +266,13 @@ export const SinglePageApp = () => {
                     <div className={classes.grow}></div>
                     <div>
                         <IconButton
-                            aria-label="show 4 new mails"
+                            aria-label="Pop Out"
+                            color="inherit"
+                        >
+                            <OpenInNewIcon />
+                        </IconButton>
+                        <IconButton
+                            aria-label="Global Settings"
                             color="inherit"
                         >
                             <SettingsIcon />
