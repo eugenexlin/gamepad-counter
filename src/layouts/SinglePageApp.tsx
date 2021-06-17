@@ -31,7 +31,7 @@ import DashboardIcon from "@material-ui/icons/Dashboard";
 import AssessmentIcon from "@material-ui/icons/Assessment";
 import SettingsIcon from "@material-ui/icons/Settings";
 import FolderSharedIcon from "@material-ui/icons/FolderShared";
-import OpenInNewIcon from '@material-ui/icons/OpenInNew';
+import OpenInNewIcon from "@material-ui/icons/OpenInNew";
 import { EasyInputFormat, HIDManager } from "../components/HIDManager";
 import { DebugLand } from "../components/DebugLand";
 import { AllTallyRenderer } from "../components/AllTallyRenderer";
@@ -39,6 +39,7 @@ import { ExpandLess, ExpandMore, StarBorder } from "@material-ui/icons";
 import { TallySet } from "../models/DashboardModels";
 import { TallySetLayout } from "../components/TallySetLayout";
 import { INFINITAS_DP } from "../models/Presets";
+import Popup, { PopupCenterTarget } from "../components/Popup";
 
 const drawerWidth = 240;
 
@@ -158,6 +159,9 @@ export const SinglePageApp = () => {
     );
 
     const [tallySet, setTallySet] = React.useState<TallySet>({});
+
+    const [isPopupOpen, setIsPopupOpen] = React.useState(false);
+    const [popupCounter, setPopupCounter] = React.useState(0);
 
     const handleRemoveReport = (index: number) => {
         if (index >= 0 && inputReports.length > index) {
@@ -313,6 +317,10 @@ export const SinglePageApp = () => {
                         <IconButton
                             aria-label="Pop Out"
                             color="inherit"
+                            onClick={() => {
+                                setIsPopupOpen(true);
+                                setPopupCounter(popupCounter + 1);
+                            }}
                         >
                             <OpenInNewIcon />
                         </IconButton>
@@ -384,6 +392,29 @@ export const SinglePageApp = () => {
                         tallySet={tallySet}
                         key={rerenderKey}
                     ></TallySetLayout>
+                )}
+                {isPopupOpen && (
+                    <Popup
+                        specs={{ width: 622, height: 160 }}
+                        centerOnTarget={PopupCenterTarget.Parent}
+                        isOpenCounter={popupCounter}
+                        title={"gamepad counter popup"}
+                        name={"gampad-counter-popup"}
+                        doNotClosePopupWithParent={false}
+                        onUnload={() => {
+                            setIsPopupOpen(false);
+                        }}
+                    >
+                        <div style={{padding:"16px", backgroundColor: "#F0F", height:"100%", width:"100%"}} >
+                            <TallySetLayout
+                                allButtons={buttonTally}
+                                allAxisIncreases={axisIncreaseTally}
+                                allAxisDecreases={axisDecreaseTally}
+                                tallySet={tallySet}
+                                key={rerenderKey}
+                            ></TallySetLayout>
+                        </div>
+                    </Popup>
                 )}
             </main>
         </div>

@@ -3,23 +3,36 @@ import { FieldType, TallySet } from "./DashboardModels";
 export const BUTTON_WIDTH: number = 96;
 export const BUTTON_HEIGHT: number = 32;
 
-export const OFFSET_V: number = 8;
-export const OFFSET: number = 0;
+export const OFFSET_V: number = 0;
+export const OFFSET: number = 16;
 
 export const DENPA_BASE_THEME: React.CSSProperties = {
     height: BUTTON_HEIGHT - 2 + "px",
     width: BUTTON_WIDTH - 2 + "px",
-    fontSize: "12px",
+    fontSize: "14px",
     textAlign: "center",
     fontFamily: "monospace",
-    border: "2px solid #444",
+    border: "solid",
+    borderWidth: "2px",
     lineHeight: BUTTON_HEIGHT - 2 + "px",
+    transition: "borderColor 0.3s ease"
 };
-export const IIDX_BUTTON_STYLE: React.CSSProperties = {};
+export const IIDX_BUTTON_STYLE: React.CSSProperties = {
+    color: "#CCC",
+    borderColor: "#CCC",
+};
+export const IIDX_BUTTON_BLACK_STYLE: React.CSSProperties = {
+    color: "#BBF",
+    borderColor: "#CCC",
+};
 export const IIDX_PLATE_UP_STYLE: React.CSSProperties = {
+    color: "#AAA",
+    borderColor: "#AAA",
     borderRadius: "16px 16px 0px 0px",
 };
 export const IIDX_PLATE_DOWN_STYLE: React.CSSProperties = {
+    color: "#AAA",
+    borderColor: "#AAA",
     borderRadius: "0px 0px 16px 16px",
 };
 
@@ -56,6 +69,67 @@ export const INFINITAS_DP: TallySet = {
                     posY: BUTTON_HEIGHT,
                 },
                 {
+                    deviceIndex: 1,
+                    fieldTypeIndex: 0,
+                    type: FieldType.button,
+                    posX: BUTTON_WIDTH * 0,
+                    posY: OFFSET_V + BUTTON_HEIGHT * 3,
+                },
+                {
+                    deviceIndex: 1,
+                    fieldTypeIndex: 2,
+                    type: FieldType.button,
+                    posX: BUTTON_WIDTH * 1,
+                    posY: OFFSET_V + BUTTON_HEIGHT * 3,
+                },
+                {
+                    deviceIndex: 1,
+                    fieldTypeIndex: 4,
+                    type: FieldType.button,
+                    posX: BUTTON_WIDTH * 2,
+                    posY: OFFSET_V + BUTTON_HEIGHT * 3,
+                },
+                {
+                    deviceIndex: 1,
+                    fieldTypeIndex: 6,
+                    type: FieldType.button,
+                    posX: BUTTON_WIDTH * 3,
+                    posY: OFFSET_V + BUTTON_HEIGHT * 3,
+                },
+                {
+                    deviceIndex: 0,
+                    fieldTypeIndex: 10,
+                    type: FieldType.button,
+                    posX: OFFSET + BUTTON_WIDTH * 5,
+                    posY: OFFSET_V + BUTTON_HEIGHT * 0,
+                },
+                {
+                    deviceIndex: 0,
+                    fieldTypeIndex: 11,
+                    type: FieldType.button,
+                    posX: OFFSET + BUTTON_WIDTH * 5,
+                    posY: OFFSET_V + BUTTON_HEIGHT * 1,
+                },
+                {
+                    deviceIndex: 1,
+                    fieldTypeIndex: 12,
+                    type: FieldType.button,
+                    posX: OFFSET + BUTTON_WIDTH * 5,
+                    posY: OFFSET_V + BUTTON_HEIGHT * 2,
+                },
+                {
+                    deviceIndex: 1,
+                    fieldTypeIndex: 13,
+                    type: FieldType.button,
+                    posX: OFFSET + BUTTON_WIDTH * 5,
+                    posY: OFFSET_V + BUTTON_HEIGHT * 3,
+                },
+            ],
+            style: IIDX_BUTTON_STYLE,
+        },
+        {
+            fields: [
+                {
                     deviceIndex: 0,
                     fieldTypeIndex: 1,
                     type: FieldType.button,
@@ -75,34 +149,6 @@ export const INFINITAS_DP: TallySet = {
                     type: FieldType.button,
                     posX: BUTTON_WIDTH / 2 + BUTTON_WIDTH * 3,
                     posY: 0,
-                },
-                {
-                    deviceIndex: 1,
-                    fieldTypeIndex: 0,
-                    type: FieldType.button,
-                    posX: OFFSET + BUTTON_WIDTH * 0,
-                    posY: OFFSET_V + BUTTON_HEIGHT * 3,
-                },
-                {
-                    deviceIndex: 1,
-                    fieldTypeIndex: 2,
-                    type: FieldType.button,
-                    posX: OFFSET + BUTTON_WIDTH * 1,
-                    posY: OFFSET_V + BUTTON_HEIGHT * 3,
-                },
-                {
-                    deviceIndex: 1,
-                    fieldTypeIndex: 4,
-                    type: FieldType.button,
-                    posX: OFFSET + BUTTON_WIDTH * 2,
-                    posY: OFFSET_V + BUTTON_HEIGHT * 3,
-                },
-                {
-                    deviceIndex: 1,
-                    fieldTypeIndex: 6,
-                    type: FieldType.button,
-                    posX: OFFSET + BUTTON_WIDTH * 3,
-                    posY: OFFSET_V + BUTTON_HEIGHT * 3,
                 },
                 {
                     deviceIndex: 1,
@@ -126,7 +172,7 @@ export const INFINITAS_DP: TallySet = {
                     posY: OFFSET_V + BUTTON_HEIGHT * 2,
                 },
             ],
-            style: IIDX_BUTTON_STYLE,
+            style: IIDX_BUTTON_BLACK_STYLE,
         },
         {
             fields: [
@@ -141,7 +187,7 @@ export const INFINITAS_DP: TallySet = {
                     deviceIndex: 1,
                     fieldTypeIndex: 0,
                     type: FieldType.axisUp,
-                    posX: OFFSET + BUTTON_WIDTH * 4,
+                    posX: BUTTON_WIDTH * 4,
                     posY: OFFSET_V + BUTTON_HEIGHT * 2,
                 },
             ],
@@ -160,7 +206,7 @@ export const INFINITAS_DP: TallySet = {
                     deviceIndex: 1,
                     fieldTypeIndex: 0,
                     type: FieldType.axisDown,
-                    posX: OFFSET + BUTTON_WIDTH * 4,
+                    posX: BUTTON_WIDTH * 4,
                     posY: OFFSET_V + BUTTON_HEIGHT * 3,
                 },
             ],
