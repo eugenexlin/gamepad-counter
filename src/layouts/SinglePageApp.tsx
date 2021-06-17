@@ -90,6 +90,10 @@ const useStyles = makeStyles((theme: Theme) =>
         nested: {
             paddingLeft: theme.spacing(4),
         },
+        buttonActivate: {
+            borderColor: "#FCC !important",
+            transition: "none !important"
+        },
     }),
 );
 
@@ -390,7 +394,9 @@ export const SinglePageApp = () => {
                         allAxisIncreases={axisIncreaseTally}
                         allAxisDecreases={axisDecreaseTally}
                         tallySet={tallySet}
-                        key={rerenderKey}
+                        // key={rerenderKey}
+                        useChangeEffect={true}
+                        changeEffectClass={classes.buttonActivate}
                     ></TallySetLayout>
                 )}
                 {isPopupOpen && (
@@ -411,7 +417,9 @@ export const SinglePageApp = () => {
                                 allAxisIncreases={axisIncreaseTally}
                                 allAxisDecreases={axisDecreaseTally}
                                 tallySet={tallySet}
-                                key={rerenderKey}
+                                // key={rerenderKey}
+                                useChangeEffect={true}
+                                changeEffectClass={classes.buttonActivate}
                             ></TallySetLayout>
                         </div>
                     </Popup>
