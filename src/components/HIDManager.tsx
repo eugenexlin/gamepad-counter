@@ -314,16 +314,15 @@ const processAxisEvents = (
             axisSettledValue[index][i] = input.axis[i].value;
         }
         let velocity = input.axis[i].value - axisSettledValue[index][i];
-        
+
         if (velocity !== 0) {
-            
             // compensate the velocity if it traveled basically > 98% of the max value..
             // we will assume it is because it wrapped around
-            if (velocity > input.axis[i].maxValue*0.98) {
-                velocity = velocity - input.axis[i].maxValue
+            if (velocity > input.axis[i].maxValue * 0.98) {
+                velocity = velocity - input.axis[i].maxValue;
             }
-            if (velocity < -(input.axis[i].maxValue*0.98)) {
-                velocity = velocity + input.axis[i].maxValue
+            if (velocity < -(input.axis[i].maxValue * 0.98)) {
+                velocity = velocity + input.axis[i].maxValue;
             }
 
             const velocityDirection = velocity / Math.abs(velocity);
@@ -384,6 +383,11 @@ const processAxisEvents = (
 
 export const HIDManager = (props: HIDManagerProps) => {
     const classes = useStyles();
+
+    const [rebindHandlerCounter, setRebindHandlerCounter] = React.useState(0);
+    const [HIDCount, setHIDCount] = React.useState(0);
+
+    const [fatalErrorMessage, setFatalErrorMessage] = React.useState("");
 
     const connectDevice = () => {
         (window.navigator as any).hid
@@ -492,12 +496,17 @@ export const HIDManager = (props: HIDManagerProps) => {
     // this effect to update the handler for all the devices that live outside of react
     React.useEffect(() => {
         const nav = window.navigator as any;
-        nav.hid.onconnect = (e) => {
-            addDevice(e.device);
-        };
-        nav.hid.ondisconnect = (e) => {
-            removeDevice(e.device);
-        };
+
+        if (nav.hid === undefined) {
+            setFatalErrorMessage("window.navigator.hid is undefined. Does your browser have certain permissions disabled?");
+        } else {
+            nav.hid.onconnect = (e) => {
+                addDevice(e.device);
+            };
+            nav.hid.ondisconnect = (e) => {
+                removeDevice(e.device);
+            };
+        }
 
         return () => {};
     }, []);
@@ -513,11 +522,16 @@ export const HIDManager = (props: HIDManagerProps) => {
         return (
             <Grid container className={classes.root} spacing={2}>
                 <Grid item xs={12}>
+                    {fatalErrorMessage !== "" && (
+                        <div style={{ color: "#F00" }}>FATAL ERROR: {fatalErrorMessage}</div>
+                    )}
+
                     <Button
                         variant="contained"
                         onClick={(event) => {
                             connectDevice();
                         }}
+                        disabled={fatalErrorMessage !== ""}
                     >
                         Connect Device
                     </Button>
