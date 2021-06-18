@@ -166,6 +166,9 @@ export const SinglePageApp = () => {
     // save button states because axis states are a lot more spammy
     const [buttonStates, setButtonStates] = React.useState<boolean[][]>([]);
 
+    const [axisLastIncreaseTime, setAxisLastIncreaseTime] = React.useState<number[][]>([]);
+    const [axisLastDecreaseTime, setAxisLastDecreaseTime] = React.useState<number[][]>([]);
+
     const [tallySet, setTallySet] = React.useState<TallySet>({});
 
     const [isPopupOpen, setIsPopupOpen] = React.useState(false);
@@ -188,19 +191,7 @@ export const SinglePageApp = () => {
     };
 
     const handleInputReport = (index: number, report: EasyInputFormat) => {
-        if (currentPage === pages.DASHBOARD) {
-            let newButtonStates = buttonStates.slice();
-            newButtonStates[index] = report.button.slice();
-            setButtonStates(newButtonStates)
-        }
         if (currentPage === pages.CONNECT) {
-            // init if not here
-            if (buttonStates[index] === undefined) {
-                let newButtonStates = buttonStates.slice();
-                newButtonStates[index] = [];
-                setButtonStates(newButtonStates)
-            }
-
             let newInputReports = inputReports.slice();
             newInputReports[index] = report;
             setInputReports(newInputReports);
@@ -223,18 +214,53 @@ export const SinglePageApp = () => {
                 index,
                 report.axis.length,
             );
+
+            //bad function name , but it works
+            ensureTallysExist(
+                buttonStates,
+                setButtonStates,
+                index,
+                0,
+            );
+            ensureTallysExist(
+                axisLastIncreaseTime,
+                setAxisLastIncreaseTime,
+                index,
+                report.axis.length,
+            );
+            ensureTallysExist(
+                axisLastDecreaseTime,
+                setAxisLastDecreaseTime,
+                index,
+                report.axis.length,
+            );
         }
     };
 
     const handleButtonDown = (index: number, buttonIndex: number) => {
+        buttonStates[index][buttonIndex] = true;
         incrementGeneric(index, buttonIndex, buttonTally);
+        
     };
-
+    const handleButtonUp = (index: number, buttonIndex: number) => {
+        buttonStates[index][buttonIndex] = false;
+        incrementRerenderKey();
+    };
+    
     const handleAxisStartIncreasing = (index: number, axisIndex: number) => {
         incrementGeneric(index, axisIndex, axisIncreaseTally);
+        setGeneric(index, axisIndex, axisLastIncreaseTime, Date.now());
     };
     const handleAxisStartDecreasing = (index: number, axisIndex: number) => {
         incrementGeneric(index, axisIndex, axisDecreaseTally);
+        setGeneric(index, axisIndex, axisLastDecreaseTime, Date.now());
+    };
+    const handleAxisKeepIncreasing = (index: number, axisIndex: number) => {
+        setGeneric(index, axisIndex, axisLastIncreaseTime, Date.now());
+    };
+    const handleAxisKeepDecreasing = (index: number, axisIndex: number) => {
+        setGeneric(index, axisIndex, axisLastDecreaseTime, Date.now());
+
     };
 
     const incrementGeneric = (
@@ -252,6 +278,19 @@ export const SinglePageApp = () => {
         }
         sourceArr[index][subIndex] += 1;
         // setArray(sourceArr);
+        incrementRerenderKey();
+    };
+    const setGeneric = (
+        index: number,
+        subIndex: number,
+        sourceArr: number[][],
+        val: number,
+    ) => {
+        if (sourceArr[index] === undefined) {
+            sourceArr[index] = [];
+        }
+
+        sourceArr[index][subIndex] = val;
         incrementRerenderKey();
     };
 
@@ -337,6 +376,7 @@ export const SinglePageApp = () => {
                             aria-label="Pop Out"
                             color="inherit"
                             onClick={() => {
+                                setCurrentPage(pages.DASHBOARD);
                                 setIsPopupOpen(true);
                                 setPopupCounter(popupCounter + 1);
                             }}
@@ -389,8 +429,11 @@ export const SinglePageApp = () => {
                     onInputReport={handleInputReport}
                     onDeviceRemoved={handleRemoveReport}
                     onButtonDown={handleButtonDown}
+                    onButtonUp={handleButtonUp}
                     onAxisStartIncreasing={handleAxisStartIncreasing}
                     onAxisStartDecreasing={handleAxisStartDecreasing}
+                    onAxisKeepIncreasing={handleAxisKeepIncreasing}
+                    onAxisKeepDecreasing={handleAxisKeepDecreasing}
                 ></HIDManager>
                 {currentPage === pages.CONNECT && (
                     <DebugLand inputReports={inputReports} />
@@ -400,7 +443,6 @@ export const SinglePageApp = () => {
                         allButtons={buttonTally}
                         allAxisIncreases={axisIncreaseTally}
                         allAxisDecreases={axisDecreaseTally}
-                        key={rerenderKey}
                     ></AllTallyRenderer>
                 )}
                 {currentPage === pages.DASHBOARD && (
@@ -409,8 +451,9 @@ export const SinglePageApp = () => {
                         allAxisIncreases={axisIncreaseTally}
                         allAxisDecreases={axisDecreaseTally}
                         tallySet={tallySet}
-                        inputReports={inputReports}
                         buttonStates={buttonStates}
+                        axisLastIncreaseTime={axisLastIncreaseTime}
+                        axisLastDecreaseTime={axisLastDecreaseTime}
                         useChangeEffect={true}
                         changeEffectClass={classes.buttonActivate}
                     ></TallySetLayout>
@@ -440,8 +483,9 @@ export const SinglePageApp = () => {
                                 allAxisIncreases={axisIncreaseTally}
                                 allAxisDecreases={axisDecreaseTally}
                                 tallySet={tallySet}
-                                inputReports={inputReports}
                                 buttonStates={buttonStates}
+                                axisLastIncreaseTime={axisLastIncreaseTime}
+                                axisLastDecreaseTime={axisLastDecreaseTime}
                                 useChangeEffect={true}
                                 changeEffectClass={classes.buttonActivate}
                             ></TallySetLayout>

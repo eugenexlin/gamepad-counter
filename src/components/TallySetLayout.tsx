@@ -1,6 +1,6 @@
 import React from "react";
 import { FieldType, TallyField, TallySet } from "../models/DashboardModels";
-import { EasyInputFormat } from "./HIDManager";
+import { DefaultAxisMoveTimeoutMillis, EasyInputFormat } from "./HIDManager";
 
 const overrideStyle = (
     base: React.CSSProperties,
@@ -15,11 +15,31 @@ interface TallyFieldRendererProps {
     allAxisDecreases: number[][];
     parentStyle?: React.CSSProperties;
     tallyField: TallyField;
-    inputReports?: EasyInputFormat[];
     buttonStates?: boolean[][];
+    axisLastIncreaseTime?: number[][];
+    axisLastDecreaseTime?: number[][];
     changeEffectClass?: string;
     useChangeEffect?: boolean;
 }
+
+const removeClass = (elementId: string) => () => {
+    const elm = document.getElementById(elementId);
+    if (elm) {
+        elm.removeAttribute("class");
+    }
+};
+const clearTimeoutIfExist = (arr: number[][], i1: number, i2: number) => {
+    if (arr[i1] === undefined) {
+        arr[i1] = [];
+    }
+    const timeout = arr[i1][i2];
+    if (timeout) {
+        window.clearTimeout(timeout);
+    }
+};
+
+var axisIncTimeouts: number[][] = [];
+var axisDecTimeouts: number[][] = [];
 
 const TallyFieldRenderer = (props: TallyFieldRendererProps) => {
     const style = overrideStyle(props.tallyField.style, props.parentStyle);
@@ -35,6 +55,9 @@ const TallyFieldRenderer = (props: TallyFieldRendererProps) => {
     let value = 0;
     let isActive = false;
 
+    const withId: string =
+        "TEMP_" + Math.round(Math.random() * 10000000000000000);
+
     if (props.tallyField.type === FieldType.button) {
         if (props.allButtons[i1]) {
             value = props.allButtons[i1][i2];
@@ -44,11 +67,29 @@ const TallyFieldRenderer = (props: TallyFieldRendererProps) => {
     if (props.tallyField.type === FieldType.axisUp) {
         if (props.allAxisIncreases[i1]) {
             value = props.allAxisIncreases[i1][i2];
+            let activeTimeRemaining =
+                DefaultAxisMoveTimeoutMillis -
+                (Date.now() - props.axisLastIncreaseTime[i1][i2]);
+            isActive = activeTimeRemaining > 0;
+            clearTimeoutIfExist(axisIncTimeouts, i1, i2);
+            axisIncTimeouts[i1][i2] = window.setTimeout(
+                removeClass(withId),
+                activeTimeRemaining,
+            );
         }
     }
     if (props.tallyField.type === FieldType.axisDown) {
         if (props.allAxisDecreases[i1]) {
             value = props.allAxisDecreases[i1][i2];
+            let activeTimeRemaining =
+                DefaultAxisMoveTimeoutMillis -
+                (Date.now() - props.axisLastDecreaseTime[i1][i2]);
+            isActive = activeTimeRemaining > 0;
+            clearTimeoutIfExist(axisDecTimeouts, i1, i2);
+            axisDecTimeouts[i1][i2] = window.setTimeout(
+                removeClass(withId),
+                activeTimeRemaining,
+            );
         }
     }
     if (props.tallyField.type === FieldType.axis) {
@@ -60,7 +101,11 @@ const TallyFieldRenderer = (props: TallyFieldRendererProps) => {
 
     if (!!props.useChangeEffect && isActive) {
         return (
-            <div style={styleWithPosition} className={props.changeEffectClass}>
+            <div
+                style={styleWithPosition}
+                id={withId}
+                className={props.changeEffectClass}
+            >
                 {value}
             </div>
         );
@@ -75,8 +120,9 @@ export interface TallySetRendererProps {
     allAxisDecreases: number[][];
     parentStyle?: React.CSSProperties;
     tallySet: TallySet;
-    inputReports?: EasyInputFormat[];
     buttonStates?: boolean[][];
+    axisLastIncreaseTime?: number[][];
+    axisLastDecreaseTime?: number[][];
     changeEffectClass?: string;
     useChangeEffect?: boolean;
 }
@@ -93,8 +139,9 @@ export const TallySetRenderer = (props: TallySetRendererProps) => {
                         allAxisIncreases={props.allAxisIncreases}
                         allAxisDecreases={props.allAxisDecreases}
                         tallySet={childSet}
-                        inputReports={props.inputReports}
                         buttonStates={props.buttonStates}
+                        axisLastIncreaseTime={props.axisLastIncreaseTime}
+                        axisLastDecreaseTime={props.axisLastDecreaseTime}
                         parentStyle={totalStyle}
                         changeEffectClass={props.changeEffectClass}
                         useChangeEffect={props.useChangeEffect}
@@ -108,8 +155,9 @@ export const TallySetRenderer = (props: TallySetRendererProps) => {
                         allAxisIncreases={props.allAxisIncreases}
                         allAxisDecreases={props.allAxisDecreases}
                         tallyField={field}
-                        inputReports={props.inputReports}
                         buttonStates={props.buttonStates}
+                        axisLastIncreaseTime={props.axisLastIncreaseTime}
+                        axisLastDecreaseTime={props.axisLastDecreaseTime}
                         parentStyle={totalStyle}
                         changeEffectClass={props.changeEffectClass}
                         useChangeEffect={props.useChangeEffect}
@@ -125,8 +173,9 @@ export interface TallySetLayoutProps {
     allAxisIncreases: number[][];
     allAxisDecreases: number[][];
     tallySet: TallySet;
-    inputReports?: EasyInputFormat[];
     buttonStates?: boolean[][];
+    axisLastIncreaseTime?: number[][];
+    axisLastDecreaseTime?: number[][];
     changeEffectClass?: string;
     useChangeEffect?: boolean;
 }
@@ -139,8 +188,9 @@ export const TallySetLayout = (props: TallySetLayoutProps) => {
                 allAxisIncreases={props.allAxisIncreases}
                 allAxisDecreases={props.allAxisDecreases}
                 tallySet={props.tallySet}
-                inputReports={props.inputReports}
                 buttonStates={props.buttonStates}
+                axisLastIncreaseTime={props.axisLastIncreaseTime}
+                axisLastDecreaseTime={props.axisLastDecreaseTime}
                 changeEffectClass={props.changeEffectClass}
                 useChangeEffect={props.useChangeEffect}
             ></TallySetRenderer>

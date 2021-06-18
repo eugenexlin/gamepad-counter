@@ -186,7 +186,7 @@ export const INFINITAS_DP: TallySet = {
                 {
                     deviceIndex: 1,
                     fieldTypeIndex: 0,
-                    type: FieldType.axisUp,
+                    type: FieldType.axisDown,
                     posX: BUTTON_WIDTH * 4,
                     posY: OFFSET_V + BUTTON_HEIGHT * 2,
                 },
@@ -205,7 +205,7 @@ export const INFINITAS_DP: TallySet = {
                 {
                     deviceIndex: 1,
                     fieldTypeIndex: 0,
-                    type: FieldType.axisDown,
+                    type: FieldType.axisUp,
                     posX: BUTTON_WIDTH * 4,
                     posY: OFFSET_V + BUTTON_HEIGHT * 3,
                 },

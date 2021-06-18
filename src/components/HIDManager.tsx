@@ -59,6 +59,8 @@ export interface HIDManagerProps {
     onButtonUp?: (gamepadIndex: number, buttonIndex: number) => any;
     onAxisStartIncreasing?: (gamepadIndex: number, axisIndex: number) => any;
     onAxisStartDecreasing?: (gamepadIndex: number, axisIndex: number) => any;
+    onAxisKeepIncreasing?: (gamepadIndex: number, axisIndex: number) => any;
+    onAxisKeepDecreasing?: (gamepadIndex: number, axisIndex: number) => any;
     onAxisChange?: (
         gamepadIndex: number,
         axisIndex: number,
@@ -73,14 +75,16 @@ export interface HIDManagerProps {
     // so i will add specific detection for when joystick bounces between 2 values extremely quickly
     IsDisableAxisJitterFilter?: boolean;
 
+    // how much to buffer axis events
+    AxisBufferMillis?: number;
     // how much you must move axis so it activates
     AxisMoveMin?: number;
     // how many ms until moving in the same direction would trigger again
     AxisMoveTimeoutMillis?: number;
 }
-
+const DefaultAxisBufferMillis = 100;
 const DefaultAxisMoveMin = 2;
-const DefaultAxisMoveTimeoutMillis = 250;
+export const DefaultAxisMoveTimeoutMillis = 200;
 
 export interface EasyInputFormat {
     deviceName: string;
@@ -177,6 +181,8 @@ var axisSettledValue: number[][] = [];
 var axisMoveDirection: number[][] = [];
 // time millies
 var axisLastMoveTime: number[][] = [];
+var axisLastMoveProcTime: number[][] = [];
+var axisBufferLastProcTime: number = Date.now();
 
 const renderDisconnectButton = (classes, removeDevice) => {
     return (
@@ -220,7 +226,19 @@ const renderDisconnectButton = (classes, removeDevice) => {
         </GridList>
     );
 };
-
+const HasButtonPresses = (input: EasyInputFormat, index: number) => {
+    const prev = previousInputs[index];
+    // if button length change i guess panic and just let it through
+    if (prev.button.length !== input.button.length) {
+        return true;
+    } else {
+        for (let i = 0; i < prev.button.length; i++) {
+            if (prev.button[i] !== input.button[i]) {
+                return true;
+            }
+        }
+    }
+};
 const IsDupeOrNoise = (
     input: EasyInputFormat,
     index: number,
@@ -234,14 +252,8 @@ const IsDupeOrNoise = (
     }
 
     // if button length change i guess panic and just let it through
-    if (prev.button.length !== input.button.length) {
+    if (HasButtonPresses(input, index)) {
         return false;
-    } else {
-        for (let i = 0; i < prev.button.length; i++) {
-            if (prev.button[i] !== input.button[i]) {
-                return false;
-            }
-        }
     }
 
     if (prev.axis.length !== input.axis.length) {
@@ -299,6 +311,9 @@ const processAxisEvents = (
     }
     if (axisLastMoveTime[index] == undefined) {
         axisLastMoveTime[index] = Array(input.axis.length).fill(nowMS);
+    }
+    if (axisLastMoveProcTime[index] == undefined) {
+        axisLastMoveProcTime[index] = Array(input.axis.length).fill(nowMS);
     }
 
     const AxisMoveMin = props.AxisMoveMin
@@ -375,6 +390,21 @@ const processAxisEvents = (
                     // if same direction, just keep updating vthe current settled value and last update time
                     axisSettledValue[index][i] = input.axis[index][i];
                     axisLastMoveTime[index][i] = nowMS;
+
+                    if (
+                        Math.abs(nowMS - axisLastMoveProcTime[index][i]) > 100
+                    ) {
+                        axisLastMoveProcTime[index][i] = nowMS;
+                        if (velocityDirection > 0) {
+                            if (props.onAxisKeepIncreasing) {
+                                props.onAxisKeepIncreasing(index, i);
+                            }
+                        } else {
+                            if (props.onAxisKeepDecreasing) {
+                                props.onAxisKeepDecreasing(index, i);
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -383,9 +413,6 @@ const processAxisEvents = (
 
 export const HIDManager = (props: HIDManagerProps) => {
     const classes = useStyles();
-
-    const [rebindHandlerCounter, setRebindHandlerCounter] = React.useState(0);
-    const [HIDCount, setHIDCount] = React.useState(0);
 
     const [fatalErrorMessage, setFatalErrorMessage] = React.useState("");
 
@@ -486,10 +513,23 @@ export const HIDManager = (props: HIDManagerProps) => {
 
             previousInputs[index] = result;
 
-            if (props.onInputReport) {
-                props.onInputReport(index, result);
+            const AxisBufferMillis = props.AxisBufferMillis
+                ? props.AxisBufferMillis
+                : DefaultAxisBufferMillis;
+
+            const isAxisReady =
+                Math.abs(axisBufferLastProcTime - Date.now()) >
+                AxisBufferMillis;
+            const HasButton = HasButtonPresses(result, index);
+            const shouldFireEvent = HasButton || isAxisReady;
+            if (isAxisReady) {
+                axisBufferLastProcTime = Date.now();
             }
-            
+            if (shouldFireEvent) {
+                if (props.onInputReport) {
+                    props.onInputReport(index, result);
+                }
+            }
         }
     };
 
@@ -498,7 +538,9 @@ export const HIDManager = (props: HIDManagerProps) => {
         const nav = window.navigator as any;
 
         if (nav.hid === undefined) {
-            setFatalErrorMessage("window.navigator.hid is undefined. Does your browser have certain permissions disabled?");
+            setFatalErrorMessage(
+                "window.navigator.hid is undefined. Does your browser have certain permissions disabled?",
+            );
         } else {
             nav.hid.onconnect = (e) => {
                 addDevice(e.device);
@@ -523,7 +565,9 @@ export const HIDManager = (props: HIDManagerProps) => {
             <Grid container className={classes.root} spacing={2}>
                 <Grid item xs={12}>
                     {fatalErrorMessage !== "" && (
-                        <div style={{ color: "#F00" }}>FATAL ERROR: {fatalErrorMessage}</div>
+                        <div style={{ color: "#F00" }}>
+                            FATAL ERROR: {fatalErrorMessage}
+                        </div>
                     )}
 
                     <Button
