@@ -20,8 +20,6 @@ import {
     ListItemText,
     Toolbar,
     Typography,
-    Menu,
-    MenuItem,
     Collapse,
 } from "@material-ui/core";
 
@@ -105,8 +103,8 @@ const useStyles = makeStyles((theme: Theme) =>
             paddingLeft: theme.spacing(4),
         },
         buttonActivate: {
-            borderColor: "#FBB !important",
-            color: "#ECC !important",
+            borderColor: "#F88 !important",
+            color: "#EAA !important",
             transition: "none !important",
         },
     }),
@@ -493,7 +491,7 @@ export const SinglePageApp = () => {
                         <div
                             style={{
                                 padding: "16px",
-                                backgroundColor: "#F0F",
+                                backgroundColor: "#0F0",
                                 height: "100%",
                                 width: "100%",
                             }}

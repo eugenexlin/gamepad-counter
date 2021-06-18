@@ -1,6 +1,6 @@
 import { FieldType, TallySet } from "./DashboardModels";
 
-export const BUTTON_WIDTH: number = 96;
+export const BUTTON_WIDTH: number = 120;
 export const BUTTON_HEIGHT: number = 32;
 
 export const OFFSET_V: number = 0;
@@ -9,30 +9,30 @@ export const OFFSET: number = 16;
 export const DENPA_BASE_THEME: React.CSSProperties = {
     height: BUTTON_HEIGHT - 2 + "px",
     width: BUTTON_WIDTH - 2 + "px",
-    fontSize: "14px",
+    fontSize: "22px",
     textAlign: "center",
-    fontFamily: "monospace",
+    fontFamily: "roboto, Calibri, sans-serif",
     border: "solid",
     borderWidth: "2px",
-    lineHeight: BUTTON_HEIGHT - 2 + "px",
+    lineHeight: BUTTON_HEIGHT - 6 + "px",
     transition: "border-color ease 0.3s, color ease 0.3s"
 };
 export const IIDX_BUTTON_STYLE: React.CSSProperties = {
-    color: "#CCC",
-    borderColor: "#CCC",
+    color: "#BBB",
+    borderColor: "#BBB",
 };
 export const IIDX_BUTTON_BLACK_STYLE: React.CSSProperties = {
-    color: "#BBF",
-    borderColor: "#CCC",
+    color: "#AAF",
+    borderColor: "#AAF",
 };
 export const IIDX_PLATE_UP_STYLE: React.CSSProperties = {
-    color: "#AAA",
-    borderColor: "#AAA",
+    color: "#999",
+    borderColor: "#999",
     borderRadius: "16px 16px 0px 0px",
 };
 export const IIDX_PLATE_DOWN_STYLE: React.CSSProperties = {
-    color: "#AAA",
-    borderColor: "#AAA",
+    color: "#999",
+    borderColor: "#999",
     borderRadius: "0px 0px 16px 16px",
 };
 
