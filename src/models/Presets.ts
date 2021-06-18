@@ -15,7 +15,7 @@ export const DENPA_BASE_THEME: React.CSSProperties = {
     border: "solid",
     borderWidth: "2px",
     lineHeight: BUTTON_HEIGHT - 2 + "px",
-    transition: "borderColor 0.3s ease"
+    transition: "border-color ease 0.3s, color ease 0.3s"
 };
 export const IIDX_BUTTON_STYLE: React.CSSProperties = {
     color: "#CCC",
@@ -98,28 +98,28 @@ export const INFINITAS_DP: TallySet = {
                 },
                 {
                     deviceIndex: 0,
-                    fieldTypeIndex: 10,
+                    fieldTypeIndex: 8,
                     type: FieldType.button,
                     posX: OFFSET + BUTTON_WIDTH * 5,
                     posY: OFFSET_V + BUTTON_HEIGHT * 0,
                 },
                 {
                     deviceIndex: 0,
-                    fieldTypeIndex: 11,
+                    fieldTypeIndex: 9,
                     type: FieldType.button,
                     posX: OFFSET + BUTTON_WIDTH * 5,
                     posY: OFFSET_V + BUTTON_HEIGHT * 1,
                 },
                 {
                     deviceIndex: 1,
-                    fieldTypeIndex: 12,
+                    fieldTypeIndex: 10,
                     type: FieldType.button,
                     posX: OFFSET + BUTTON_WIDTH * 5,
                     posY: OFFSET_V + BUTTON_HEIGHT * 2,
                 },
                 {
                     deviceIndex: 1,
-                    fieldTypeIndex: 13,
+                    fieldTypeIndex: 11,
                     type: FieldType.button,
                     posX: OFFSET + BUTTON_WIDTH * 5,
                     posY: OFFSET_V + BUTTON_HEIGHT * 3,

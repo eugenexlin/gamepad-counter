@@ -1,5 +1,6 @@
 import React from "react";
 import { FieldType, TallyField, TallySet } from "../models/DashboardModels";
+import { EasyInputFormat } from "./HIDManager";
 
 const overrideStyle = (
     base: React.CSSProperties,
@@ -14,14 +15,11 @@ interface TallyFieldRendererProps {
     allAxisDecreases: number[][];
     parentStyle?: React.CSSProperties;
     tallyField: TallyField;
+    inputReports?: EasyInputFormat[];
+    buttonStates?: boolean[][];
     changeEffectClass?: string;
     useChangeEffect?: boolean;
 }
-
-//experimental feature outside of react so we can get some performance
-var TallySetLayout_PreviousButtons: number[][] = [];
-var TallySetLayout_PreviousAxisInc: number[][] = [];
-var TallySetLayout_PreviousAxisDec: number[][] = [];
 
 const TallyFieldRenderer = (props: TallyFieldRendererProps) => {
     const style = overrideStyle(props.tallyField.style, props.parentStyle);
@@ -34,63 +32,35 @@ const TallyFieldRenderer = (props: TallyFieldRendererProps) => {
     const i1 = props.tallyField.deviceIndex;
     const i2 = props.tallyField.fieldTypeIndex;
 
-    if (TallySetLayout_PreviousButtons[i1] == undefined) {
-        TallySetLayout_PreviousButtons[i1] = [];
-        TallySetLayout_PreviousAxisInc[i1] = [];
-        TallySetLayout_PreviousAxisDec[i1] = [];
-    }
-
     let value = 0;
-    let isDifferent = false;
+    let isActive = false;
 
     if (props.tallyField.type === FieldType.button) {
         if (props.allButtons[i1]) {
             value = props.allButtons[i1][i2];
-            isDifferent = value !== TallySetLayout_PreviousButtons[i1][i2];
-            TallySetLayout_PreviousButtons[i1][i2] = props.allButtons[i1][i2];
+            isActive = props.buttonStates[i1] && props.buttonStates[i1][i2];
         }
     }
     if (props.tallyField.type === FieldType.axisUp) {
         if (props.allAxisIncreases[i1]) {
             value = props.allAxisIncreases[i1][i2];
-            isDifferent = value !== TallySetLayout_PreviousAxisInc[i1][i2];
-            TallySetLayout_PreviousAxisInc[i1][i2] =
-                props.allAxisIncreases[i1][i2];
         }
     }
     if (props.tallyField.type === FieldType.axisDown) {
         if (props.allAxisDecreases[i1]) {
             value = props.allAxisDecreases[i1][i2];
-            isDifferent = value !== TallySetLayout_PreviousAxisDec[i1][i2];
-            TallySetLayout_PreviousAxisDec[i1][i2] =
-                props.allAxisDecreases[i1][i2];
         }
     }
     if (props.tallyField.type === FieldType.axis) {
         if (props.allAxisIncreases[i1] && props.allAxisDecreases[i1]) {
             value =
                 props.allAxisIncreases[i1][i2] + props.allAxisDecreases[i1][i2];
-            isDifferent =
-                value !==
-                TallySetLayout_PreviousAxisInc[i1][i2] +
-                    TallySetLayout_PreviousAxisDec[i1][i2];
-            TallySetLayout_PreviousAxisInc[i1][i2] =
-                props.allAxisIncreases[i1][i2];
-            TallySetLayout_PreviousAxisDec[i1][i2] =
-                props.allAxisDecreases[i1][i2];
         }
     }
 
-    if (!!props.useChangeEffect && isDifferent) {
-        const withId = "TEMP_" + Math.round(Math.random() * 10000000000000000);
-        window.setTimeout(() => {}, 50);
-        console.warn(i1, i2, withId, props.changeEffectClass);
+    if (!!props.useChangeEffect && isActive) {
         return (
-            <div
-                style={styleWithPosition}
-                id={withId}
-                className={props.changeEffectClass}
-            >
+            <div style={styleWithPosition} className={props.changeEffectClass}>
                 {value}
             </div>
         );
@@ -105,6 +75,8 @@ export interface TallySetRendererProps {
     allAxisDecreases: number[][];
     parentStyle?: React.CSSProperties;
     tallySet: TallySet;
+    inputReports?: EasyInputFormat[];
+    buttonStates?: boolean[][];
     changeEffectClass?: string;
     useChangeEffect?: boolean;
 }
@@ -121,6 +93,8 @@ export const TallySetRenderer = (props: TallySetRendererProps) => {
                         allAxisIncreases={props.allAxisIncreases}
                         allAxisDecreases={props.allAxisDecreases}
                         tallySet={childSet}
+                        inputReports={props.inputReports}
+                        buttonStates={props.buttonStates}
                         parentStyle={totalStyle}
                         changeEffectClass={props.changeEffectClass}
                         useChangeEffect={props.useChangeEffect}
@@ -134,6 +108,8 @@ export const TallySetRenderer = (props: TallySetRendererProps) => {
                         allAxisIncreases={props.allAxisIncreases}
                         allAxisDecreases={props.allAxisDecreases}
                         tallyField={field}
+                        inputReports={props.inputReports}
+                        buttonStates={props.buttonStates}
                         parentStyle={totalStyle}
                         changeEffectClass={props.changeEffectClass}
                         useChangeEffect={props.useChangeEffect}
@@ -149,6 +125,8 @@ export interface TallySetLayoutProps {
     allAxisIncreases: number[][];
     allAxisDecreases: number[][];
     tallySet: TallySet;
+    inputReports?: EasyInputFormat[];
+    buttonStates?: boolean[][];
     changeEffectClass?: string;
     useChangeEffect?: boolean;
 }
@@ -161,6 +139,8 @@ export const TallySetLayout = (props: TallySetLayoutProps) => {
                 allAxisIncreases={props.allAxisIncreases}
                 allAxisDecreases={props.allAxisDecreases}
                 tallySet={props.tallySet}
+                inputReports={props.inputReports}
+                buttonStates={props.buttonStates}
                 changeEffectClass={props.changeEffectClass}
                 useChangeEffect={props.useChangeEffect}
             ></TallySetRenderer>

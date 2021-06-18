@@ -91,8 +91,9 @@ const useStyles = makeStyles((theme: Theme) =>
             paddingLeft: theme.spacing(4),
         },
         buttonActivate: {
-            borderColor: "#FCC !important",
-            transition: "none !important"
+            borderColor: "#FBB !important",
+            color: "#ECC !important",
+            transition: "none !important",
         },
     }),
 );
@@ -162,6 +163,9 @@ export const SinglePageApp = () => {
         [],
     );
 
+    // save button states because axis states are a lot more spammy
+    const [buttonStates, setButtonStates] = React.useState<boolean[][]>([]);
+
     const [tallySet, setTallySet] = React.useState<TallySet>({});
 
     const [isPopupOpen, setIsPopupOpen] = React.useState(false);
@@ -184,31 +188,42 @@ export const SinglePageApp = () => {
     };
 
     const handleInputReport = (index: number, report: EasyInputFormat) => {
-        if (currentPage !== pages.CONNECT) {
-            return;
+        if (currentPage === pages.DASHBOARD) {
+            let newButtonStates = buttonStates.slice();
+            newButtonStates[index] = report.button.slice();
+            setButtonStates(newButtonStates)
         }
-        let newInputReports = inputReports.slice();
-        newInputReports[index] = report;
-        setInputReports(newInputReports);
+        if (currentPage === pages.CONNECT) {
+            // init if not here
+            if (buttonStates[index] === undefined) {
+                let newButtonStates = buttonStates.slice();
+                newButtonStates[index] = [];
+                setButtonStates(newButtonStates)
+            }
 
-        ensureTallysExist(
-            buttonTally,
-            setButtonTally,
-            index,
-            report.button.length,
-        );
-        ensureTallysExist(
-            axisIncreaseTally,
-            setAxisIncreaseTally,
-            index,
-            report.axis.length,
-        );
-        ensureTallysExist(
-            axisDecreaseTally,
-            setAxisDecreaseTally,
-            index,
-            report.axis.length,
-        );
+            let newInputReports = inputReports.slice();
+            newInputReports[index] = report;
+            setInputReports(newInputReports);
+
+            ensureTallysExist(
+                buttonTally,
+                setButtonTally,
+                index,
+                report.button.length,
+            );
+            ensureTallysExist(
+                axisIncreaseTally,
+                setAxisIncreaseTally,
+                index,
+                report.axis.length,
+            );
+            ensureTallysExist(
+                axisDecreaseTally,
+                setAxisDecreaseTally,
+                index,
+                report.axis.length,
+            );
+        }
     };
 
     const handleButtonDown = (index: number, buttonIndex: number) => {
@@ -394,7 +409,8 @@ export const SinglePageApp = () => {
                         allAxisIncreases={axisIncreaseTally}
                         allAxisDecreases={axisDecreaseTally}
                         tallySet={tallySet}
-                        // key={rerenderKey}
+                        inputReports={inputReports}
+                        buttonStates={buttonStates}
                         useChangeEffect={true}
                         changeEffectClass={classes.buttonActivate}
                     ></TallySetLayout>
@@ -411,13 +427,21 @@ export const SinglePageApp = () => {
                             setIsPopupOpen(false);
                         }}
                     >
-                        <div style={{padding:"16px", backgroundColor: "#F0F", height:"100%", width:"100%"}} >
+                        <div
+                            style={{
+                                padding: "16px",
+                                backgroundColor: "#F0F",
+                                height: "100%",
+                                width: "100%",
+                            }}
+                        >
                             <TallySetLayout
                                 allButtons={buttonTally}
                                 allAxisIncreases={axisIncreaseTally}
                                 allAxisDecreases={axisDecreaseTally}
                                 tallySet={tallySet}
-                                // key={rerenderKey}
+                                inputReports={inputReports}
+                                buttonStates={buttonStates}
                                 useChangeEffect={true}
                                 changeEffectClass={classes.buttonActivate}
                             ></TallySetLayout>
