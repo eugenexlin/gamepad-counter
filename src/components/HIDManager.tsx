@@ -228,6 +228,9 @@ const renderDisconnectButton = (classes, removeDevice) => {
 };
 const HasButtonPresses = (input: EasyInputFormat, index: number) => {
     const prev = previousInputs[index];
+    if (prev === undefined) {
+        return true;
+    }
     // if button length change i guess panic and just let it through
     if (prev.button.length !== input.button.length) {
         return true;
@@ -511,8 +514,6 @@ export const HIDManager = (props: HIDManagerProps) => {
             // process axis movements
             processAxisEvents(result, index, props);
 
-            previousInputs[index] = result;
-
             const AxisBufferMillis = props.AxisBufferMillis
                 ? props.AxisBufferMillis
                 : DefaultAxisBufferMillis;
@@ -522,6 +523,9 @@ export const HIDManager = (props: HIDManagerProps) => {
                 AxisBufferMillis;
             const HasButton = HasButtonPresses(result, index);
             const shouldFireEvent = HasButton || isAxisReady;
+
+            previousInputs[index] = result;
+
             if (isAxisReady) {
                 axisBufferLastProcTime = Date.now();
             }
