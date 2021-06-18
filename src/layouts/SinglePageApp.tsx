@@ -478,7 +478,7 @@ export const SinglePageApp = () => {
                 )}
                 {isPopupOpen && (
                     <Popup
-                        specs={{ width: 622, height: 160 }}
+                        specs={{ width: 1250, height: 300 }}
                         centerOnTarget={PopupCenterTarget.Parent}
                         isOpenCounter={popupCounter}
                         title={"gamepad counter popup"}

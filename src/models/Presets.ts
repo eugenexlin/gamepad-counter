@@ -1,7 +1,7 @@
 import { FieldType, TallySet } from "./DashboardModels";
 
-export const BUTTON_WIDTH: number = 120;
-export const BUTTON_HEIGHT: number = 32;
+export const BUTTON_WIDTH: number = 200;
+export const BUTTON_HEIGHT: number = 64;
 
 export const OFFSET_V: number = 0;
 export const OFFSET: number = 16;
@@ -9,31 +9,34 @@ export const OFFSET: number = 16;
 export const DENPA_BASE_THEME: React.CSSProperties = {
     height: BUTTON_HEIGHT - 2 + "px",
     width: BUTTON_WIDTH - 2 + "px",
-    fontSize: "22px",
+    fontSize: "42px",
     textAlign: "center",
-    fontFamily: "roboto, Calibri, sans-serif",
+    fontFamily: "segoe ui, sans-serif",
+    fontWeight: "bold",
     border: "solid",
-    borderWidth: "2px",
-    lineHeight: BUTTON_HEIGHT - 6 + "px",
+    borderWidth: "5px",
+    lineHeight: BUTTON_HEIGHT - 10 + "px",
     transition: "border-color ease 0.3s, color ease 0.3s"
 };
 export const IIDX_BUTTON_STYLE: React.CSSProperties = {
-    color: "#BBB",
-    borderColor: "#BBB",
+    color: "#CCC",
+    borderColor: "#CCC",
+    borderRadius: "4px 4px 4px 4px",
 };
 export const IIDX_BUTTON_BLACK_STYLE: React.CSSProperties = {
-    color: "#AAF",
-    borderColor: "#AAF",
+    color: "#AAA",
+    borderColor: "#AAA",
+    borderRadius: "4px 4px 4px 4px",
 };
 export const IIDX_PLATE_UP_STYLE: React.CSSProperties = {
-    color: "#999",
-    borderColor: "#999",
-    borderRadius: "16px 16px 0px 0px",
+    color: "#99C",
+    borderColor: "#99C",
+    borderRadius: "48px 48px 4px 4px",
 };
 export const IIDX_PLATE_DOWN_STYLE: React.CSSProperties = {
-    color: "#999",
-    borderColor: "#999",
-    borderRadius: "0px 0px 16px 16px",
+    color: "#99C",
+    borderColor: "#99C",
+    borderRadius: "4px 4px 48px 48px",
 };
 
 export const INFINITAS_DP: TallySet = {
@@ -154,21 +157,21 @@ export const INFINITAS_DP: TallySet = {
                     deviceIndex: 1,
                     fieldTypeIndex: 1,
                     type: FieldType.button,
-                    posX: OFFSET + BUTTON_WIDTH / 2 + BUTTON_WIDTH * 0,
+                    posX: BUTTON_WIDTH / 2 + BUTTON_WIDTH * 0,
                     posY: OFFSET_V + BUTTON_HEIGHT * 2,
                 },
                 {
                     deviceIndex: 1,
                     fieldTypeIndex: 3,
                     type: FieldType.button,
-                    posX: OFFSET + BUTTON_WIDTH / 2 + BUTTON_WIDTH * 1,
+                    posX: BUTTON_WIDTH / 2 + BUTTON_WIDTH * 1,
                     posY: OFFSET_V + BUTTON_HEIGHT * 2,
                 },
                 {
                     deviceIndex: 1,
                     fieldTypeIndex: 5,
                     type: FieldType.button,
-                    posX: OFFSET + BUTTON_WIDTH / 2 + BUTTON_WIDTH * 2,
+                    posX: BUTTON_WIDTH / 2 + BUTTON_WIDTH * 2,
                     posY: OFFSET_V + BUTTON_HEIGHT * 2,
                 },
             ],
