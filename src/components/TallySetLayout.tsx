@@ -1,5 +1,6 @@
 import React from "react";
 import { FieldType, TallyField, TallySet } from "../models/DashboardModels";
+import { safeBoolArr, safeNumArr } from "../utils/arrayUtils";
 import { DefaultAxisMoveTimeoutMillis, EasyInputFormat } from "./HIDManager";
 
 const overrideStyle = (
@@ -54,49 +55,47 @@ const TallyFieldRenderer = (props: TallyFieldRendererProps) => {
 
     let value = 0;
     let isActive = false;
+    let activeTimeRemaining = 0;
 
     const withId: string =
         "TEMP_" + Math.round(Math.random() * 10000000000000000);
 
     if (props.tallyField.type === FieldType.button) {
-        if (props.allButtons[i1]) {
-            value = props.allButtons[i1][i2];
-            isActive = props.buttonStates[i1] && props.buttonStates[i1][i2];
-        }
+        value = safeNumArr(props.allButtons, i1, i2);
+        isActive = safeBoolArr(props.buttonStates, i1, i2);
     }
     if (props.tallyField.type === FieldType.axisUp) {
-        if (props.allAxisIncreases[i1]) {
-            value = props.allAxisIncreases[i1][i2];
-            let activeTimeRemaining =
-                DefaultAxisMoveTimeoutMillis -
-                (Date.now() - props.axisLastIncreaseTime[i1][i2]);
-            isActive = activeTimeRemaining > 0;
-            clearTimeoutIfExist(axisIncTimeouts, i1, i2);
-            axisIncTimeouts[i1][i2] = window.setTimeout(
-                removeClass(withId),
-                activeTimeRemaining,
-            );
-        }
+        value = safeNumArr(props.allAxisIncreases, i1, i2);
+        activeTimeRemaining =
+            DefaultAxisMoveTimeoutMillis -
+            (Date.now() - safeNumArr(props.axisLastIncreaseTime, i1, i2));
+        isActive = activeTimeRemaining > 0;
+        clearTimeoutIfExist(axisIncTimeouts, i1, i2);
+        axisIncTimeouts[i1][i2] = window.setTimeout(
+            removeClass(withId),
+            activeTimeRemaining,
+        );
     }
     if (props.tallyField.type === FieldType.axisDown) {
-        if (props.allAxisDecreases[i1]) {
-            value = props.allAxisDecreases[i1][i2];
-            let activeTimeRemaining =
-                DefaultAxisMoveTimeoutMillis -
-                (Date.now() - props.axisLastDecreaseTime[i1][i2]);
-            isActive = activeTimeRemaining > 0;
-            clearTimeoutIfExist(axisDecTimeouts, i1, i2);
-            axisDecTimeouts[i1][i2] = window.setTimeout(
-                removeClass(withId),
-                activeTimeRemaining,
-            );
-        }
+        value = safeNumArr(props.allAxisDecreases, i1, i2);
+        activeTimeRemaining =
+            DefaultAxisMoveTimeoutMillis -
+            (Date.now() - safeNumArr(props.axisLastDecreaseTime, i1, i2));
+        isActive = activeTimeRemaining > 0;
     }
     if (props.tallyField.type === FieldType.axis) {
         if (props.allAxisIncreases[i1] && props.allAxisDecreases[i1]) {
             value =
                 props.allAxisIncreases[i1][i2] + props.allAxisDecreases[i1][i2];
         }
+    }
+
+    if (activeTimeRemaining > 0) {
+        clearTimeoutIfExist(axisDecTimeouts, i1, i2);
+        axisDecTimeouts[i1][i2] = window.setTimeout(
+            removeClass(withId),
+            activeTimeRemaining,
+        );
     }
 
     if (!!props.useChangeEffect && isActive) {
@@ -110,7 +109,7 @@ const TallyFieldRenderer = (props: TallyFieldRendererProps) => {
             </div>
         );
     } else {
-        return <div style={styleWithPosition}>{value}</div>;
+        return <div style={styleWithPosition}>{String(value)}</div>;
     }
 };
 
@@ -132,9 +131,10 @@ export const TallySetRenderer = (props: TallySetRendererProps) => {
 
     return (
         <>
-            {props.tallySet.childSets?.map((childSet) => {
+            {props.tallySet.childSets?.map((childSet, i) => {
                 return (
                     <TallySetRenderer
+                        key={"set" + i}
                         allButtons={props.allButtons}
                         allAxisIncreases={props.allAxisIncreases}
                         allAxisDecreases={props.allAxisDecreases}
@@ -148,9 +148,10 @@ export const TallySetRenderer = (props: TallySetRendererProps) => {
                     ></TallySetRenderer>
                 );
             })}
-            {props.tallySet.fields?.map((field) => {
+            {props.tallySet.fields?.map((field, i) => {
                 return (
                     <TallyFieldRenderer
+                        key={"field" + i}
                         allButtons={props.allButtons}
                         allAxisIncreases={props.allAxisIncreases}
                         allAxisDecreases={props.allAxisDecreases}

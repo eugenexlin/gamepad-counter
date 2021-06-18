@@ -34,7 +34,7 @@ export const AxisBar = (props: AxisBarProps) => {
     return (
         <>
             <div style={outerBar}>
-                <div style={floatingNumber}>{props.axis.value}</div>
+                <div style={floatingNumber}>{String(props.axis.value)}</div>
                 <div style={{ ...innerBar, width: percent + "%" }}></div>
             </div>
         </>

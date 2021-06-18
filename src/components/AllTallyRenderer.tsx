@@ -72,10 +72,10 @@ const Axis = (props: AxisProps) => {
     return (
         <span style={axisContainer}>
             <div style={axisStyleTop}>
-                {props.increaseTally ? props.increaseTally : 0}
+                {props.increaseTally ? String(props.increaseTally) : 0}
             </div>
             <div style={axisStyleBottom}>
-                {props.decreaseTally ? props.decreaseTally : 0}
+                {props.decreaseTally ? String(props.decreaseTally) : 0}
             </div>
         </span>
     );

@@ -41,7 +41,21 @@ import { TallySetLayout } from "../components/TallySetLayout";
 import { INFINITAS_DP } from "../models/Presets";
 import Popup, { PopupCenterTarget } from "../components/Popup";
 
+import Cookies, { CookieSetOptions } from "universal-cookie";
+import { SaveProfile } from "../models/SaveModels";
+const cookies = new Cookies();
+
 const drawerWidth = 240;
+
+var SingletonSaveInterval = 0;
+
+var buttonTally: number[][] = [];
+var axisIncreaseTally: number[][] = [];
+var axisDecreaseTally: number[][] = [];
+
+var buttonStates: boolean[][] = [];
+var axisLastIncreaseTime: number[][] = [];
+var axisLastDecreaseTime: number[][] = [];
 
 // HID fires events outside react livecycle so it is faster than react lifecycle can handle
 // this will let it increment properly
@@ -128,6 +142,12 @@ const mapPageToIcon = (page: pages) => {
     }
 };
 
+const getEncodedCookie = (name: string) => {
+    const cookieVal = cookies.get(name);
+    console.info("loaded cookie:", cookieVal);
+    return cookieVal;
+};
+
 export const SinglePageApp = () => {
     const [mobileOpen, setMobileOpen] = React.useState(false);
 
@@ -136,13 +156,6 @@ export const SinglePageApp = () => {
     const [isPresetsOpen, setIsPresetsOpen] = React.useState(true);
 
     // [joy index][button index]
-    const [buttonTally, setButtonTally] = React.useState<number[][]>([]);
-    const [axisIncreaseTally, setAxisIncreaseTally] = React.useState<
-        number[][]
-    >([]);
-    const [axisDecreaseTally, setAxisDecreaseTally] = React.useState<
-        number[][]
-    >([]);
 
     const [rerenderKey, setRerenderKey] = React.useState<number>(
         rerenderCountOutsideReact,
@@ -163,12 +176,6 @@ export const SinglePageApp = () => {
         [],
     );
 
-    // save button states because axis states are a lot more spammy
-    const [buttonStates, setButtonStates] = React.useState<boolean[][]>([]);
-
-    const [axisLastIncreaseTime, setAxisLastIncreaseTime] = React.useState<number[][]>([]);
-    const [axisLastDecreaseTime, setAxisLastDecreaseTime] = React.useState<number[][]>([]);
-
     const [tallySet, setTallySet] = React.useState<TallySet>({});
 
     const [isPopupOpen, setIsPopupOpen] = React.useState(false);
@@ -182,11 +189,9 @@ export const SinglePageApp = () => {
         }
     };
 
-    const ensureTallysExist = (arr, setArr, index, count) => {
+    const ensureNumberArrExist = (arr, index, count) => {
         if (arr[index] == undefined) {
-            let nextTally = _.cloneDeep(arr);
-            nextTally[index] = Array(count).fill(0);
-            setArr(nextTally);
+            arr[index] = Array(count).fill(0);
         }
     };
 
@@ -196,41 +201,19 @@ export const SinglePageApp = () => {
             newInputReports[index] = report;
             setInputReports(newInputReports);
 
-            ensureTallysExist(
-                buttonTally,
-                setButtonTally,
-                index,
-                report.button.length,
-            );
-            ensureTallysExist(
-                axisIncreaseTally,
-                setAxisIncreaseTally,
-                index,
-                report.axis.length,
-            );
-            ensureTallysExist(
-                axisDecreaseTally,
-                setAxisDecreaseTally,
-                index,
-                report.axis.length,
-            );
+            ensureNumberArrExist(buttonTally, index, report.button.length);
+            ensureNumberArrExist(axisIncreaseTally, index, report.axis.length);
+            ensureNumberArrExist(axisDecreaseTally, index, report.axis.length);
 
             //bad function name , but it works
-            ensureTallysExist(
-                buttonStates,
-                setButtonStates,
-                index,
-                0,
-            );
-            ensureTallysExist(
+            ensureNumberArrExist(buttonStates, index, 0);
+            ensureNumberArrExist(
                 axisLastIncreaseTime,
-                setAxisLastIncreaseTime,
                 index,
                 report.axis.length,
             );
-            ensureTallysExist(
+            ensureNumberArrExist(
                 axisLastDecreaseTime,
-                setAxisLastDecreaseTime,
                 index,
                 report.axis.length,
             );
@@ -240,13 +223,12 @@ export const SinglePageApp = () => {
     const handleButtonDown = (index: number, buttonIndex: number) => {
         buttonStates[index][buttonIndex] = true;
         incrementGeneric(index, buttonIndex, buttonTally);
-        
     };
     const handleButtonUp = (index: number, buttonIndex: number) => {
         buttonStates[index][buttonIndex] = false;
         incrementRerenderKey();
     };
-    
+
     const handleAxisStartIncreasing = (index: number, axisIndex: number) => {
         incrementGeneric(index, axisIndex, axisIncreaseTally);
         setGeneric(index, axisIndex, axisLastIncreaseTime, Date.now());
@@ -260,7 +242,6 @@ export const SinglePageApp = () => {
     };
     const handleAxisKeepDecreasing = (index: number, axisIndex: number) => {
         setGeneric(index, axisIndex, axisLastDecreaseTime, Date.now());
-
     };
 
     const incrementGeneric = (
@@ -352,6 +333,45 @@ export const SinglePageApp = () => {
             </List>
         </div>
     );
+
+    const saveData = () => {
+        let expireDate = new Date();
+        expireDate.setFullYear(expireDate.getFullYear() + 3);
+        const cookieSettings: CookieSetOptions = {
+            path: "/",
+            expires: expireDate,
+        };
+
+        const profile: SaveProfile = {
+            buttonTally: buttonTally,
+            axisIncreaseTally: axisIncreaseTally,
+            axisDecreaseTally: axisDecreaseTally,
+        };
+
+        console.log("saving data to cookie", profile);
+
+        cookies.set("saveData", JSON.stringify(profile), cookieSettings);
+    };
+
+    React.useEffect(() => {
+        // load cookie if exist
+        try {
+            const profile: SaveProfile = getEncodedCookie("saveData");
+            buttonTally = profile.buttonTally;
+            axisIncreaseTally = profile.axisIncreaseTally;
+            axisDecreaseTally = profile.axisDecreaseTally;
+        } catch {
+            buttonTally = [];
+            axisIncreaseTally = [];
+            axisDecreaseTally = [];
+        }
+
+        window.clearInterval(SingletonSaveInterval);
+        // set auto save
+        SingletonSaveInterval = window.setInterval(() => {
+            saveData();
+        }, 5000);
+    }, []);
 
     return (
         <div className={classes.root}>
