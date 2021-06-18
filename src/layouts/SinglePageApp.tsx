@@ -370,7 +370,7 @@ export const SinglePageApp = () => {
         // set auto save
         SingletonSaveInterval = window.setInterval(() => {
             saveData();
-        }, 5000);
+        }, 60000);
     }, []);
 
     return (
