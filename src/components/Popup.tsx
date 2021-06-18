@@ -440,6 +440,10 @@ class Popup extends React.PureComponent<PopupProps, PopupState> {
             })
             .join(",");
     };
+
+    getDocument = () => {
+        return this.popup.document;
+    }
 }
 
 export default Popup;

@@ -59,6 +59,8 @@ var axisLastDecreaseTime: number[][] = [];
 // this will let it increment properly
 var rerenderCountOutsideReact = 0;
 
+var popupRef = undefined;
+
 const useStyles = makeStyles((theme: Theme) =>
     createStyles({
         root: {
@@ -364,12 +366,53 @@ export const SinglePageApp = () => {
             axisDecreaseTally = [];
         }
 
+        window.addEventListener("beforeunload", (event) => {
+            // try to close popup first
+            event.preventDefault();
+            if (popupRef !== undefined) {
+                popupRef.handlePopupClose();
+            }
+        });
+
+        (window as any).RemoveClassByDocumentID = (elementId: string) => {
+            console.warn("go", isPopupOpen);
+            if (isPopupOpen) {
+                const elm = popupRef.getDocument().getElementById(elementId);
+                if (elm) {
+                    elm.removeAttribute("class");
+                }
+            } else {
+                const elm = window.document.getElementById(elementId);
+                if (elm) {
+                    elm.removeAttribute("class");
+                }
+            }
+        };
+
         window.clearInterval(SingletonSaveInterval);
         // set auto save
         SingletonSaveInterval = window.setInterval(() => {
             saveData();
         }, 60000);
     }, []);
+
+    React.useEffect(() => {
+        if (isPopupOpen) {
+            (window as any).RemoveClassByDocumentID = (elementId: string) => {
+                const elm = popupRef.getDocument().getElementById(elementId);
+                if (elm) {
+                    elm.removeAttribute("class");
+                }
+            };
+        } else {
+            (window as any).RemoveClassByDocumentID = (elementId: string) => {
+                const elm = window.document.getElementById(elementId);
+                if (elm) {
+                    elm.removeAttribute("class");
+                }
+            };
+        }
+    }, [isPopupOpen]);
 
     return (
         <div className={classes.root}>
@@ -463,7 +506,7 @@ export const SinglePageApp = () => {
                         allAxisDecreases={axisDecreaseTally}
                     ></AllTallyRenderer>
                 )}
-                {currentPage === pages.DASHBOARD && (
+                {currentPage === pages.DASHBOARD && !isPopupOpen && (
                     <TallySetLayout
                         allButtons={buttonTally}
                         allAxisIncreases={axisIncreaseTally}
@@ -484,6 +527,9 @@ export const SinglePageApp = () => {
                         title={"gamepad counter popup"}
                         name={"gampad-counter-popup"}
                         doNotClosePopupWithParent={false}
+                        ref={(r) => {
+                            popupRef = r;
+                        }}
                         onUnload={() => {
                             setIsPopupOpen(false);
                         }}

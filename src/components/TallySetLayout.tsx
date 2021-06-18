@@ -24,7 +24,11 @@ interface TallyFieldRendererProps {
 }
 
 const removeClass = (elementId: string) => () => {
-    const elm = document.getElementById(elementId);
+    if ((window as any).RemoveClassByDocumentID){
+        (window as any).RemoveClassByDocumentID(elementId);
+        return;
+    }
+    const elm = window.document.getElementById(elementId);
     if (elm) {
         elm.removeAttribute("class");
     }
